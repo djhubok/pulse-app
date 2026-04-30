@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 :root{
@@ -56,7 +57,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* ══════════════════════════════════════════
    NAV
 ══════════════════════════════════════════ */
-.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:6px 0 max(10px,env(safe-area-inset-bottom));background:rgba(8,8,8,0.97);border-top:1px solid var(--dim);display:grid;grid-template-columns:1fr 1fr 60px 1fr 1fr;align-items:center;justify-items:center;backdrop-filter:blur(20px)}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:0 0 max(10px,env(safe-area-inset-bottom));background:rgba(8,8,8,0.97);border-top:1px solid var(--dim);display:grid;grid-template-columns:1fr 1fr 64px 1fr 1fr;align-items:center;justify-items:center;backdrop-filter:blur(20px);min-height:var(--nav)}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;transition:transform 0.15s;user-select:none}
 .nav-btn:active{transform:scale(0.88)}
 .nav-btn svg{width:22px;height:22px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.22s}
@@ -67,12 +68,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .nav-btn.active .nav-lbl{color:var(--pulse)}
 
 /* REC BUTTON — plain red circle, perfectly centered */
-.rec-wrap{display:flex;align-items:center;justify-content:center;width:60px}
-.rec-outer{width:50px;height:50px;border-radius:50%;background:#e00;border:3px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;margin-top:-18px;transition:transform 0.15s,background 0.2s;box-shadow:0 0 16px rgba(220,0,0,0.45);flex-shrink:0}
-.rec-outer:active{transform:scale(0.92)}
-.rec-outer.recording{background:#ff3333;box-shadow:0 0 24px rgba(255,0,0,0.7);animation:recPulse 1s ease-in-out infinite}
-@keyframes recPulse{0%,100%{box-shadow:0 0 16px rgba(255,0,0,0.5)}50%{box-shadow:0 0 30px rgba(255,0,0,0.85)}}
-.rec-inner-sq{width:14px;height:14px;border-radius:3px;background:#fff;opacity:0;transition:opacity 0.15s}
+.rec-wrap{display:flex;align-items:center;justify-content:center;width:64px;height:var(--nav);position:relative}
+.rec-outer{width:52px;height:52px;border-radius:50%;background:#dd0000;border:3px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);transition:transform 0.15s,background 0.2s;box-shadow:0 0 18px rgba(210,0,0,0.5);flex-shrink:0}
+.rec-outer:active{transform:translate(-50%,-60%) scale(0.92)}
+.rec-outer.recording{background:#ff2222;box-shadow:0 0 26px rgba(255,0,0,0.7);animation:recPulse 1s ease-in-out infinite}
+@keyframes recPulse{0%,100%{box-shadow:0 0 16px rgba(255,0,0,0.5)}50%{box-shadow:0 0 32px rgba(255,0,0,0.9)}}
+.rec-inner-sq{width:15px;height:15px;border-radius:3px;background:#fff;opacity:0;transition:opacity 0.15s}
 .rec-outer.recording .rec-inner-sq{opacity:1}
 
 /* SCREENS */
@@ -99,7 +100,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .post-emoji-big{font-size:min(130px,28vw);opacity:0.14;pointer-events:none}
 .post-tg{position:absolute;top:0;left:0;right:0;height:210px;background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent)}
 .post-bg2{position:absolute;bottom:0;left:0;right:0;height:290px;background:linear-gradient(to top,rgba(0,0,0,0.88),transparent)}
-.post-info{position:absolute;bottom:calc(var(--nav) + 16px);left:16px;right:72px}
+.post-info{position:absolute;bottom:calc(var(--nav) + 20px);left:16px;right:76px}
 .post-user-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
 .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;flex-shrink:0;position:relative;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -112,7 +113,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .post-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:11px;font-weight:500}
 .tag-nb{background:rgba(0,212,255,0.1);color:var(--pulse2);border:1px solid rgba(0,212,255,0.2)}
 .tag-fl{background:rgba(255,0,110,0.1);color:#ff6ea8;border:1px solid rgba(255,0,110,0.2)}
-.post-actions{position:absolute;bottom:calc(var(--nav) + 16px);right:10px;display:flex;flex-direction:column;gap:18px;align-items:center}
+.post-actions{position:absolute;bottom:calc(var(--nav) + 20px);right:10px;display:flex;flex-direction:column;gap:20px;align-items:center}
 .act{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;user-select:none}
 .act svg{width:27px;height:27px;stroke:rgba(255,255,255,0.9);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.18s;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6))}
 .act.liked svg{stroke:var(--pulse3);fill:var(--pulse3)}
@@ -476,7 +477,7 @@ input[type=file]{display:none}
       <div class="logo">pul<span>se</span></div>
       <div class="msg-icon-btn" onclick="openMessages()">
         <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <div class="msg-badge" id="msgBadge">3</div>
+        <div class="msg-badge" id="msgBadge" style="display:none">0</div>
       </div>
     </div>
     <div class="feed-tabs">
@@ -938,51 +939,20 @@ input[type=file]{display:none}
 /* ══════════════════════════════════════════
    DATA
 ══════════════════════════════════════════ */
-const ALL_USERS=[
-  {id:1,name:'Lucas García',handle:'@lucasg',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,dist:'280m',followers:'4.2K',pulses:'342',views:'87K',bio:'Fotógrafo amateur. Plaza Merlo todos los días.',tags:['📸 Fotos','🌆 Ciudad','🌅 Atardeceres'],emojis:['🌆','📸','🌃','🏙️','🌇','🌉','📷','🌄','🏛️','🚶','🌠','🎞️'],vl:['1.2K','890','2.4K','456','3.1K','78','1.8K','234','5.4K','901','1.1K','677']},
-  {id:2,name:'Mia Reyes',handle:'@miareyes',av:'MR',avc:'linear-gradient(135deg,#ff006e,#ff8c00)',star:true,dist:'1.2km',followers:'89.2K',pulses:'1.2K',views:'2.1M',bio:'Capturando el momento exacto.',tags:['🎵 Música','📸 Fotos','🏙️ Ciudad'],emojis:['🎵','🎤','🎧','🎶','🎼','🎹','🎸','🥁','🎺','🎻','🎙️','🔊'],vl:['18K','12K','34K','8.9K','45K','3.2K','21K','9.1K','67K','11K','5.4K','28K']},
-  {id:3,name:'Tomás Torres',handle:'@tomast',av:'TT',avc:'linear-gradient(135deg,#00d4ff,#0066ff)',star:false,dist:'450m',followers:'1.8K',pulses:'189',views:'34K',bio:'El cielo desde mi terraza. Merlo, BsAs.',tags:['🌌 Cielo','🔭 Astro','📸 Fotos'],emojis:['🌌','🔭','⭐','🌙','☀️','🌠','🪐','🌟','💫','🌌','🔭','🌛'],vl:['876','541','1.2K','234','987','123','654','321','1.8K','432','765','543']},
-  {id:4,name:'Sofía Keller',handle:'@sof_dance',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,dist:'90m',followers:'34.2K',pulses:'567',views:'890K',bio:'Bailarina profesional. ¡El movimiento es vida!',tags:['💃 Baile','🎵 Música','✨ Vida'],emojis:['💃','🕺','🎭','✨','🎪','🎠','💫','🌈','🎉','🎊','🎶','🌟'],vl:['34K','28K','56K','12K','78K','4.5K','23K','45K','91K','15K','8.7K','34K']},
-  {id:5,name:'Fede Jiménez',handle:'@fedej',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,dist:'1.8km',followers:'2.3K',pulses:'421',views:'56K',bio:'Skate vida. Merlo tiene el mejor skate park.',tags:['🛹 Skate','🔥 Tricks','🏙️ Calle'],emojis:['🛹','🔥','💨','🤙','⚡','🎯','💪','🏆','🛼','🎪','🏄','🤸'],vl:['1.2K','890','3.4K','567','2.1K','234','1.8K','456','4.5K','678','1.1K','890']},
-  {id:6,name:'Karla Vega',handle:'@karlav',av:'KV',avc:'linear-gradient(135deg,#a855f7,#ec4899)',star:true,dist:'3.4km',followers:'12.1K',pulses:'893',views:'456K',bio:'Golden hour hunter. Arte y color en cada Pulse.',tags:['🌅 Sunsets','🎨 Arte','💜 Vida'],emojis:['🌅','🎨','💜','🌈','✨','🖌️','🌸','🦋','🌺','🎭','💐','🌻'],vl:['9.8K','7.2K','15K','3.4K','22K','1.8K','11K','5.6K','34K','4.3K','8.9K','17K']},
-  {id:7,name:'Rami Ortega',handle:'@ramio',av:'RO',avc:'linear-gradient(135deg,#00ff87,#00aa44)',star:false,dist:'620m',followers:'890',pulses:'78',views:'12K',bio:'Comida casera y mucho amor. 🍕🌮',tags:['🍕 Comida','🌮 Cocina','❤️ Familia'],emojis:['🍕','🌮','🍔','🍝','🥗','🍜','🌯','🧆','🥙','🍱','🥘','🍲'],vl:['456','234','789','123','567','89','345','210','678','456','234','567']},
-  {id:8,name:'Vale Ríos',handle:'@vale.rios',av:'VR',avc:'linear-gradient(135deg,#ff8c00,#ffcc00)',star:false,dist:'2.1km',followers:'3.4K',pulses:'234',views:'78K',bio:'Arte urbano en las calles de Merlo. ✍️',tags:['🎨 Arte','🏙️ Urbano','✍️ Graffiti'],emojis:['🎨','✍️','🖌️','🏙️','🌆','🎭','🖼️','🎪','🌈','💥','⚡','🔥'],vl:['3.4K','1.2K','5.6K','890','4.5K','234','2.3K','678','7.8K','1.1K','3.4K','2.1K']},
-];
-
-const CONVOS={
-  1:[{mine:false,text:'Ey! Vi tu Pulse del atardecer 🔥',time:'Ayer'},{mine:true,text:'¡Gracias! Fue desde la plaza nueva',time:'Ayer'},{mine:false,text:'Queda cerca de donde vivo, voy mañana',time:'Ayer'},{mine:true,text:'Dale! La luz a las 7pm es increíble',time:'Ayer'},{mine:false,text:'Perfecto 📸 Te mando fotos',time:'10:30'}],
-  4:[{mine:false,text:'Holaa! Me encantó tu último Pulse 💃',time:'Lunes'},{mine:true,text:'¡Gracias Sofía!! 🙏 El tuyo del ensayo estuvo increíble',time:'Lunes'},{mine:false,text:'Jeje gracias 😊 ¿Colaboramos algún día?',time:'Lunes'},{mine:true,text:'Me encantaría!! Mandame DM cuando quieras',time:'Martes'},{mine:false,text:'Dale! Esta semana tengo tiempo 🎵',time:'Hoy'},{mine:false,text:'¿El jueves te viene bien?',time:'Hoy'}],
-  6:[{mine:false,text:'Tu foto del golden hour me salvó el día ✨',time:'Hoy'},{mine:false,text:'¿Dónde fue exactamente?',time:'Hoy'}],
-};
-const DMS=[
-  {userId:4,preview:'¿El jueves te viene bien?',time:'Hoy',unread:2,online:true},
-  {userId:6,preview:'¿Dónde fue exactamente?',time:'Hoy',unread:1,online:true},
-  {userId:1,preview:'Te mando fotos',time:'10:30',unread:0,online:false},
-];
-
-const POSTS_NEARBY=[
-  {id:1,userId:1,user:'@lucasg',name:'Lucas G.',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,nearby:true,dist:'280m',caption:'Tarde perfecta en la plaza 🌇',bg:'linear-gradient(160deg,#0d1b2a,#1a3a2a,#0a2a1a)',emoji:'🌆',likes:2400,comments:'89',shares:'34'},
-  {id:3,userId:3,user:'@tomast',name:'Tomás T.',av:'TT',avc:'linear-gradient(135deg,#00d4ff,#0066ff)',star:false,nearby:true,dist:'450m',caption:'El cielo desde la terraza 🔥',bg:'linear-gradient(160deg,#0a1a2a,#0a1520,#050a10)',emoji:'🌌',likes:876,comments:'41',shares:'12'},
-  {id:4,userId:4,user:'@sof_dance',name:'Sofía K.',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,nearby:true,dist:'90m',caption:'¡Ensayo nuevo! ¿Lo ven? 👀',bg:'linear-gradient(160deg,#1a0a1a,#2a0a2a,#100010)',emoji:'💃',likes:34200,comments:'1.8K',shares:'4.7K'},
-  {id:5,userId:5,user:'@fedej',name:'Fede J.',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,nearby:true,dist:'1.8km',caption:'Skate park vacío 🛹',bg:'linear-gradient(160deg,#1a1200,#2a1e00,#0f0a00)',emoji:'🛹',likes:1200,comments:'67',shares:'89'},
-  {id:7,userId:7,user:'@ramio',name:'Rami O.',av:'RO',avc:'linear-gradient(135deg,#00ff87,#00aa44)',star:false,nearby:true,dist:'620m',caption:'Pizza de masa madre 🍕',bg:'linear-gradient(160deg,#1a1200,#1a0800,#0f0600)',emoji:'🍕',likes:543,comments:'29',shares:'8'},
-];
-const POSTS_FOLLOWING_DATA={
-  2:{id:2,userId:2,user:'@miareyes',name:'Mia Reyes',av:'MR',avc:'linear-gradient(135deg,#ff006e,#ff8c00)',star:true,nearby:false,dist:'1.2km',caption:'Nuevo set listo ✨',bg:'linear-gradient(160deg,#1a0a20,#2d0a3a,#1a0020)',emoji:'🎵',likes:18700,comments:'934',shares:'2.1K'},
-  4:{id:4,userId:4,user:'@sof_dance',name:'Sofía K.',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,nearby:true,dist:'90m',caption:'¡Ensayo nuevo! 👀',bg:'linear-gradient(160deg,#1a0a1a,#2a0a2a,#100010)',emoji:'💃',likes:34200,comments:'1.8K',shares:'4.7K'},
-  6:{id:6,userId:6,user:'@karlav',name:'Karla V.',av:'KV',avc:'linear-gradient(135deg,#a855f7,#ec4899)',star:true,nearby:false,dist:'3.4km',caption:'Golden hour 🌅',bg:'linear-gradient(160deg,#1a0d14,#2a1020,#150010)',emoji:'🌅',likes:9800,comments:'423',shares:'1.1K'},
-  1:{id:1,userId:1,user:'@lucasg',name:'Lucas G.',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,nearby:true,dist:'280m',caption:'Tarde perfecta en la plaza 🌇',bg:'linear-gradient(160deg,#0d1b2a,#1a3a2a,#0a2a1a)',emoji:'🌆',likes:2400,comments:'89',shares:'34'},
-  5:{id:5,userId:5,user:'@fedej',name:'Fede J.',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,nearby:true,dist:'1.8km',caption:'Skate park 🛹',bg:'linear-gradient(160deg,#1a1200,#2a1e00,#0f0a00)',emoji:'🛹',likes:1200,comments:'67',shares:'89'},
-};
-const GRID_E=['🌆','🎵','🌌','💃','🛹','🌅','🌃','🎤','🏙️','📸','🎧','🔥'];
-const GRID_V=['1.2K','890','2.4K','456','3.1K','78','1.8K','234','5.4K','901','1.1K','677'];
+const ALL_USERS=[];
+const CONVOS={};
+const DMS=[];
+const POSTS_NEARBY=[];
+const POSTS_FOLLOWING_DATA={};
+const GRID_E=[];
+const GRID_V=[];
 
 /* ══════════════════════════════════════════
    STATE
 ══════════════════════════════════════════ */
 let liked={},followed=new Set(),curTab='nearby',curOvUser=null,curChatUser=null;
-let myProfile={name:'Mia Reyes',handle:'@miareyes',bio:'Capturando el momento exacto. 📍 Siempre cerca.\nCreadora de contenido local.',location:'Merlo, BsAs',avatarUrl:null,avatarInitials:'MR',avatarGradient:'linear-gradient(135deg,#ff006e,#ff8c00)'};
-let myAvatarImg=null; // base64
+let myProfile={name:'',handle:'',bio:'',location:'',avatarUrl:null,avatarInitials:'',avatarGradient:'linear-gradient(135deg,#00ff87,#00d4ff)'};
+let myAvatarImg=null;
 
 // Camera state
 let camStream=null,camFacing='environment',camRecording=false,camRecorder=null,camTimer=null,camSeconds=0;
@@ -1012,10 +982,13 @@ function doRegister(){
   if(!name||!handle||!email||!pass){showAuthError('regError','Completá todos los campos');return;}
   if(pass.length<6){showAuthError('regError','La contraseña debe tener al menos 6 caracteres');return;}
   if(accounts[email]){showAuthError('regError','Ya existe una cuenta con ese email');return;}
-  accounts[email]={name,handle:handle.startsWith('@')?handle:'@'+handle,pass};
+  const cleanHandle=handle.startsWith('@')?handle:'@'+handle;
+  accounts[email]={name,handle:cleanHandle,pass};
   myProfile.name=name;
-  myProfile.handle=handle.startsWith('@')?handle:'@'+handle;
+  myProfile.handle=cleanHandle;
+  myProfile.bio='';myProfile.location='';myAvatarImg=null;
   myProfile.avatarInitials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  myProfile.avatarGradient='linear-gradient(135deg,#00ff87,#00d4ff)';
   enterApp();
 }
 
@@ -1031,10 +1004,92 @@ function doLogin(){
 }
 
 function doGoogleLogin(){
-  // Simulate Google SSO
-  myProfile.name='Usuario Google';myProfile.handle='@usuario_google';
-  myProfile.avatarInitials='UG';
+  // Real Google OAuth via Google Identity Services (GIS)
+  // This opens the actual Google account picker
+  if(typeof google!=='undefined'&&google.accounts){
+    google.accounts.id.initialize({
+      client_id:'442661677792-c19337etmaguee3dnnm7mlah1takntgg.apps.googleusercontent.com',
+      callback:handleGoogleCredential,
+      auto_select:false,
+      cancel_on_tap_outside:true,
+    });
+    google.accounts.id.prompt((notification)=>{
+      if(notification.isNotDisplayed()||notification.isSkippedMoment()){
+        // Fallback: open OAuth popup
+        openGoogleOAuthPopup();
+      }
+    });
+  } else {
+    openGoogleOAuthPopup();
+  }
+}
+
+function openGoogleOAuthPopup(){
+  // Abre el flujo real de Google OAuth
+  // Para que funcione necesitás configurar un Client ID en Google Cloud Console:
+  // 1. console.cloud.google.com → APIs & Services → Credentials
+  // 2. Create OAuth 2.0 Client ID → Web application
+  // 3. Authorized origins: tu URL de Vercel
+  // 4. Reemplazá 'YOUR_GOOGLE_CLIENT_ID' arriba con el ID generado
+  const clientId='442661677792-c19337etmaguee3dnnm7mlah1takntgg.apps.googleusercontent.com';
+  const redirectUri=encodeURIComponent(window.location.origin+window.location.pathname);
+  const scope=encodeURIComponent('openid email profile');
+  const url=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
+
+  if(clientId==='YOUR_GOOGLE_CLIENT_ID'){
+    // Sin Client ID configurado: mostrar instrucciones
+    showAuthError('regError','Para Google Login: configurá tu Client ID en Google Cloud Console (ver README)');
+    showAuthError('logError','Para Google Login: configurá tu Client ID en Google Cloud Console');
+    // Demo mode: enter as guest
+    setTimeout(()=>{
+      myProfile.name='Usuario';
+      myProfile.handle='@usuario';
+      myProfile.avatarInitials='U';
+      myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
+      enterApp();
+    },1200);
+    return;
+  }
+
+  const popup=window.open(url,'google-oauth','width=500,height=600,scrollbars=yes');
+  const check=setInterval(()=>{
+    try{
+      if(popup.location.href.includes(window.location.origin)){
+        const hash=popup.location.hash;
+        const params=new URLSearchParams(hash.slice(1));
+        const token=params.get('access_token');
+        clearInterval(check);popup.close();
+        if(token) fetchGoogleProfile(token);
+      }
+    }catch(e){}
+    if(popup.closed)clearInterval(check);
+  },300);
+}
+
+function handleGoogleCredential(response){
+  // Decode JWT from Google One Tap
+  const payload=JSON.parse(atob(response.credential.split('.')[1]));
+  myProfile.name=payload.name||'Usuario Google';
+  myProfile.handle='@'+((payload.email||'').split('@')[0].replace(/[^a-z0-9]/gi,'_'));
+  myProfile.avatarInitials=(payload.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
+  if(payload.picture) myAvatarImg=payload.picture;
   enterApp();
+}
+
+async function fetchGoogleProfile(token){
+  try{
+    const res=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+token}});
+    const data=await res.json();
+    myProfile.name=data.name||'Usuario Google';
+    myProfile.handle='@'+((data.email||'').split('@')[0].replace(/[^a-z0-9]/gi,'_'));
+    myProfile.avatarInitials=(data.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
+    if(data.picture) myAvatarImg=data.picture;
+    enterApp();
+  }catch(e){
+    showAuthError('regError','Error al conectar con Google. Intentá de nuevo.');
+  }
 }
 
 function enterApp(){
@@ -1634,13 +1689,18 @@ function addActivityMarkers(lat,lng){
   });
 }
 
-// Called when GPS resolves — updates map center
+// Called when GPS resolves — updates marker but does NOT recenter if user is panning
 function updateMapLocation(lat,lng){
   if(!myProfile) myProfile={};
   myProfile._lat=lat;myProfile._lng=lng;
   if(leafletMap){
-    leafletMap.setView([lat,lng],15);
+    // Only fly to location on first GPS fix
+    if(!myProfile._gpsFixed){
+      myProfile._gpsFixed=true;
+      leafletMap.setView([lat,lng],15,{animate:true});
+    }
     if(userMarker) userMarker.setLatLng([lat,lng]);
+    // Refresh heat layer around real location without moving map view
     if(heatLayer){leafletMap.removeLayer(heatLayer);}
     heatLayer=L.heatLayer(generateHeatPoints(lat,lng),{
       radius:35,blur:25,maxZoom:17,
@@ -1658,6 +1718,13 @@ function countUp(id,from,to,dur){
 
 function buildProfileGrid(){
   const g=document.getElementById('profileGrid');
+  if(!g)return;
+  g.innerHTML='';
+  if(!GRID_E.length){
+    g.style.cssText='padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;grid-column:1/-1';
+    g.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;grid-column:1/-1">Todavía no publicaste ningún Pulse.<br>Tocá el botón rojo para empezar.</div>';
+    return;
+  }
   GRID_E.forEach((em,i)=>{
     const d=document.createElement('div');d.className='pgitem';
     d.innerHTML=`<div class="pgitem-in" style="background:linear-gradient(135deg,hsl(${i*30},55%,11%),hsl(${i*30+50},45%,16%))">${em}</div><div class="pgviews">▶ ${GRID_V[i]}</div>`;
