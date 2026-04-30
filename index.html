@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080808">
+<title>Pulse</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+:root{
+  --bg:#080808;--surface:#111;--surface2:#1a1a1a;--surface3:#222;--surface4:#2a2a2a;
+  --pulse:#00ff87;--pulse2:#00d4ff;--pulse3:#ff006e;
+  --text:#f0f0f0;--muted:#666;--dim:#2a2a2a;
+  --font:'DM Sans',sans-serif;--mono:'Space Mono',monospace;
+  --nav:64px;
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;position:fixed}
+.app{width:100%;height:100%;position:relative;overflow:hidden}
+
+/* ══════════════════════════════════════════
+   AUTH SCREEN
+══════════════════════════════════════════ */
+#authScreen{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;transition:opacity 0.4s,transform 0.4s}
+#authScreen.hidden{opacity:0;pointer-events:none;transform:scale(1.04)}
+.auth-glow{position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(0,255,135,0.12) 0%,transparent 70%);pointer-events:none}
+.auth-logo{font-family:var(--mono);font-size:42px;font-weight:700;letter-spacing:-0.05em;margin-bottom:8px;text-align:center}
+.auth-logo span{color:var(--pulse)}
+.auth-tagline{font-size:14px;color:var(--muted);text-align:center;margin-bottom:48px;font-weight:300;line-height:1.5}
+.auth-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--dim);border-radius:20px;padding:24px;margin-bottom:16px}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:22px}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.22s;color:var(--muted)}
+.auth-tab.active{background:var(--surface3);color:var(--text)}
+.auth-field{margin-bottom:14px}
+.auth-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px;letter-spacing:0.04em;text-transform:uppercase}
+.auth-input{width:100%;background:var(--surface2);border:1px solid var(--dim);border-radius:12px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;caret-color:var(--pulse);transition:border-color 0.2s;user-select:auto}
+.auth-input:focus{border-color:rgba(0,255,135,0.35)}
+.auth-input::placeholder{color:var(--muted)}
+.auth-btn{width:100%;background:var(--pulse);color:#000;border:none;border-radius:13px;padding:15px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:opacity 0.2s,transform 0.15s;letter-spacing:0.02em}
+.auth-btn:active{opacity:0.85;transform:scale(0.98)}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.auth-divider-line{flex:1;height:1px;background:var(--dim)}
+.auth-divider-text{font-size:12px;color:var(--muted);white-space:nowrap}
+.google-btn{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--dim);border-radius:13px;padding:14px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background 0.2s,transform 0.15s}
+.google-btn:active{background:var(--surface3);transform:scale(0.98)}
+.google-icon{width:20px;height:20px;flex-shrink:0}
+.auth-terms{font-size:11px;color:var(--muted);text-align:center;line-height:1.5;margin-top:20px}
+.auth-terms span{color:var(--pulse);cursor:pointer}
+.auth-error{font-size:12px;color:var(--pulse3);margin-top:8px;display:none;padding:8px 12px;background:rgba(255,0,110,0.08);border-radius:8px;border:1px solid rgba(255,0,110,0.15)}
+
+/* ══════════════════════════════════════════
+   NAV
+══════════════════════════════════════════ */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:8px 0 max(10px,env(safe-area-inset-bottom));background:rgba(8,8,8,0.97);border-top:1px solid var(--dim);display:flex;align-items:center;justify-content:space-around;backdrop-filter:blur(20px)}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;transition:transform 0.15s;user-select:none}
+.nav-btn:active{transform:scale(0.88)}
+.nav-btn svg{width:22px;height:22px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.22s}
+.nav-btn.active svg{stroke:var(--pulse)}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--pulse);opacity:0;transition:opacity 0.22s}
+.nav-btn.active .nav-dot{opacity:1}
+.nav-lbl{font-size:9px;color:var(--muted);transition:color 0.22s;font-weight:500;text-transform:uppercase;letter-spacing:0.07em}
+.nav-btn.active .nav-lbl{color:var(--pulse)}
+
+/* REC BUTTON — plain red circle */
+.rec-wrap{display:flex;align-items:center;justify-content:center}
+.rec-outer{width:52px;height:52px;border-radius:50%;background:#e00;border:3px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;margin-top:-14px;transition:transform 0.15s,background 0.2s;box-shadow:0 0 18px rgba(220,0,0,0.4)}
+.rec-outer:active{transform:scale(0.92)}
+.rec-outer.recording{background:#ff3333;box-shadow:0 0 24px rgba(255,0,0,0.6);animation:recPulse 1s ease-in-out infinite}
+@keyframes recPulse{0%,100%{box-shadow:0 0 18px rgba(255,0,0,0.5)}50%{box-shadow:0 0 30px rgba(255,0,0,0.8)}}
+.rec-inner-sq{width:14px;height:14px;border-radius:3px;background:#fff;opacity:0;transition:opacity 0.15s}
+.rec-outer.recording .rec-inner-sq{opacity:1}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;bottom:var(--nav);overflow:hidden;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.screen.active{opacity:1;pointer-events:all}
+
+/* ══════════════════════════════════════════
+   FEED
+══════════════════════════════════════════ */
+.feed-header{position:absolute;top:0;left:0;right:0;z-index:50;padding:max(46px,env(safe-area-inset-top)) 16px 14px;background:linear-gradient(to bottom,rgba(8,8,8,0.96),transparent)}
+.feed-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.logo{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:-0.04em}
+.logo span{color:var(--pulse)}
+.msg-icon-btn{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.msg-icon-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.msg-badge{position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--pulse3);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:var(--mono)}
+.feed-tabs{display:flex;background:rgba(255,255,255,0.07);border-radius:22px;padding:3px;width:fit-content}
+.feed-tab{font-size:12px;font-weight:500;padding:6px 16px;border-radius:19px;cursor:pointer;transition:all 0.22s;color:var(--muted);user-select:none}
+.feed-tab.active{background:var(--surface2);color:var(--text)}
+.feed-container{position:absolute;inset:0;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none}
+.feed-container::-webkit-scrollbar{display:none}
+.post{width:100%;height:100%;scroll-snap-align:start;position:relative;overflow:hidden}
+.post-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.post-emoji-big{font-size:min(130px,28vw);opacity:0.14;pointer-events:none}
+.post-tg{position:absolute;top:0;left:0;right:0;height:210px;background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent)}
+.post-bg2{position:absolute;bottom:0;left:0;right:0;height:290px;background:linear-gradient(to top,rgba(0,0,0,0.88),transparent)}
+.post-info{position:absolute;bottom:22px;left:16px;right:68px}
+.post-user-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;flex-shrink:0;position:relative;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--pulse);animation:aRing 2s ease-out infinite;opacity:0.5}
+@keyframes aRing{0%{transform:scale(1);opacity:0.5}100%{transform:scale(1.4);opacity:0}}
+.star-badge{width:14px;height:14px;background:linear-gradient(135deg,#FFD700,#FFA500);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;margin-left:-7px;margin-top:14px;border:2px solid var(--bg);flex-shrink:0}
+.post-uname{font-size:14px;font-weight:600;color:#fff}
+.post-dist{font-family:var(--mono);font-size:10px;background:rgba(0,255,135,0.1);color:var(--pulse);border:1px solid rgba(0,255,135,0.2);border-radius:20px;padding:2px 8px;display:inline-block;margin-top:3px}
+.post-cap{font-size:14px;color:rgba(255,255,255,0.88);line-height:1.45;font-weight:300;margin-bottom:7px}
+.post-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:11px;font-weight:500}
+.tag-nb{background:rgba(0,212,255,0.1);color:var(--pulse2);border:1px solid rgba(0,212,255,0.2)}
+.tag-fl{background:rgba(255,0,110,0.1);color:#ff6ea8;border:1px solid rgba(255,0,110,0.2)}
+.post-actions{position:absolute;bottom:22px;right:10px;display:flex;flex-direction:column;gap:20px;align-items:center}
+.act{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;user-select:none}
+.act svg{width:27px;height:27px;stroke:rgba(255,255,255,0.9);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.18s;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6))}
+.act.liked svg{stroke:var(--pulse3);fill:var(--pulse3)}
+.act span{font-size:11px;color:rgba(255,255,255,0.78);font-weight:500;font-family:var(--mono)}
+.empty-feed{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 30px;text-align:center}
+.empty-feed-icon{font-size:50px;opacity:0.35}
+.empty-feed-title{font-size:18px;font-weight:700}
+.empty-feed-sub{font-size:14px;color:var(--muted);line-height:1.55}
+.empty-feed-btn{margin-top:8px;background:var(--pulse);color:#000;border:none;border-radius:22px;padding:12px 24px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer}
+
+/* ══════════════════════════════════════════
+   CAMERA / RECORD OVERLAY
+══════════════════════════════════════════ */
+#cameraOverlay{position:fixed;inset:0;z-index:600;background:#000;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.3s}
+#cameraOverlay.open{opacity:1;pointer-events:all}
+#cameraPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam-top-bar{position:absolute;top:0;left:0;right:0;padding:max(48px,env(safe-area-inset-top)) 20px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10;background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent)}
+.cam-close{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cam-close svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cam-timer-display{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;background:rgba(220,0,0,0.7);padding:4px 14px;border-radius:20px;opacity:0;transition:opacity 0.3s}
+.cam-timer-display.visible{opacity:1}
+.cam-flip{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cam-flip svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cam-bottom{position:absolute;bottom:0;left:0;right:0;padding:24px 0 max(40px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:20px;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);z-index:10}
+.cam-progress-wrap{width:80%;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden}
+.cam-progress-bar{height:100%;width:0%;background:#e00;border-radius:2px;transition:width 0.2s linear}
+.cam-record-btn{width:72px;height:72px;border-radius:50%;border:4px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all 0.2s}
+.cam-record-inner{width:54px;height:54px;border-radius:50%;background:#e00;transition:all 0.2s;box-shadow:0 0 20px rgba(220,0,0,0.5)}
+.cam-record-btn.recording .cam-record-inner{border-radius:10px;width:36px;height:36px;background:#ff3333}
+.cam-hint{font-size:12px;color:rgba(255,255,255,0.7);font-family:var(--mono)}
+
+/* ══════════════════════════════════════════
+   SEARCH
+══════════════════════════════════════════ */
+#search-screen{background:var(--bg);overflow-y:auto;scrollbar-width:none}
+#search-screen::-webkit-scrollbar{display:none}
+.search-header{padding:max(50px,env(safe-area-inset-top)) 16px 12px;position:sticky;top:0;z-index:10;background:rgba(8,8,8,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--dim)}
+.search-title{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:-0.03em;margin-bottom:12px}
+.search-title span{color:var(--pulse)}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--dim);border-radius:14px;padding:0 14px;transition:border-color 0.2s}
+.search-box:focus-within{border-color:rgba(0,255,135,0.35)}
+.search-box svg{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.search-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:15px;padding:12px 0;caret-color:var(--pulse);user-select:auto}
+.search-input::placeholder{color:var(--muted)}
+.clear-btn{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1;display:none}
+.search-section-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.09em;font-weight:600;padding:16px 16px 10px}
+.user-card{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;transition:background 0.15s;user-select:none}
+.user-card:active{background:var(--surface)}
+.user-card-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#000;flex-shrink:0;position:relative;overflow:hidden}
+.user-card-av img{width:100%;height:100%;object-fit:cover}
+.star-pip{position:absolute;bottom:0;right:0;width:16px;height:16px;background:linear-gradient(135deg,#FFD700,#FFA500);border-radius:50%;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:8px}
+.user-card-info{flex:1;min-width:0}
+.user-card-name{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.user-card-handle{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.user-card-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.user-card-follow{background:var(--pulse);color:#000;border:none;border-radius:20px;padding:6px 14px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:all 0.2s;user-select:none}
+.user-card-follow.following{background:var(--surface3);color:var(--text);border:1px solid var(--dim)}
+.verified-pip{width:14px;height:14px;background:linear-gradient(135deg,var(--pulse),var(--pulse2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;font-weight:700;flex-shrink:0}
+.s-divider{height:1px;background:var(--dim);margin:0 16px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;text-align:center}
+.empty-icon{font-size:40px;opacity:0.4}
+.empty-text{font-size:14px;line-height:1.6;color:var(--muted)}
+.trending-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 20px}
+.trend-pill{background:var(--surface2);border:1px solid var(--dim);border-radius:20px;padding:7px 14px;font-size:13px;color:var(--text);cursor:pointer;transition:all 0.18s;user-select:none}
+.trend-pill:active{border-color:rgba(0,255,135,0.3);color:var(--pulse)}
+
+/* ══════════════════════════════════════════
+   PROFILE OVERLAY (other user)
+══════════════════════════════════════════ */
+.profile-overlay{position:fixed;inset:0;z-index:400;background:var(--bg);transform:translateX(100%);transition:transform 0.32s cubic-bezier(.25,.8,.25,1);overflow-y:auto;scrollbar-width:none}
+.profile-overlay::-webkit-scrollbar{display:none}
+.profile-overlay.open{transform:translateX(0)}
+.ov-back{display:flex;align-items:center;gap:10px;padding:max(50px,env(safe-area-inset-top)) 16px 14px;background:rgba(8,8,8,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--dim);cursor:pointer;position:sticky;top:0;z-index:10;user-select:none}
+.ov-back svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ov-back span{font-size:15px;font-weight:600}
+.ov-hero{position:relative;padding:24px 20px 0;min-height:170px}
+.ov-av{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:700;color:#000;position:relative;border:3px solid var(--bg);overflow:hidden}
+.ov-av img{width:100%;height:100%;object-fit:cover}
+.ov-crown{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:17px}
+.ov-name-row{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ov-name{font-size:21px;font-weight:700;letter-spacing:-0.02em}
+.ov-verified{width:20px;height:20px;background:linear-gradient(135deg,var(--pulse),var(--pulse2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:700}
+.ov-star-badge{background:rgba(0,255,135,0.08);border:1px solid rgba(0,255,135,0.2);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--pulse);font-weight:700;letter-spacing:0.05em}
+.ov-handle{font-size:13px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.ov-bio{padding:12px 20px 0;font-size:14px;color:rgba(255,255,255,0.7);line-height:1.55;font-weight:300}
+.ov-tags{display:flex;gap:8px;padding:10px 20px 0;flex-wrap:wrap}
+.ov-tag{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--dim);color:var(--muted);font-weight:500}
+.ov-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--dim);border-radius:14px;overflow:hidden;margin:18px 20px 0;border:1px solid var(--dim)}
+.ov-stat{background:var(--surface);padding:14px 8px;text-align:center}
+.ov-stat-num{font-family:var(--mono);font-size:17px;font-weight:700}
+.ov-stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.07em}
+.ov-btns{display:flex;gap:10px;padding:14px 20px 0}
+.ov-btn-f{flex:1;border:none;border-radius:13px;padding:13px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.ov-btn-f.not-following{background:var(--pulse);color:#000}
+.ov-btn-f.is-following{background:var(--surface3);color:var(--text);border:1px solid var(--dim)}
+.ov-btn-msg{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--dim);border-radius:13px;padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer}
+.ov-grid-lbl{padding:18px 20px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.09em;font-weight:600;border-top:1px solid var(--dim);margin-top:16px}
+.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding-bottom:30px}
+.ov-gi{aspect-ratio:1;background:var(--surface2);position:relative;overflow:hidden;cursor:pointer}
+.ov-gi-in{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:min(34px,8vw)}
+.ov-gi-views{position:absolute;bottom:4px;left:5px;font-size:10px;color:rgba(255,255,255,0.85);font-weight:700;font-family:var(--mono);text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+
+/* ══════════════════════════════════════════
+   MESSAGES + CHAT
+══════════════════════════════════════════ */
+.overlay-slide{position:fixed;inset:0;z-index:400;background:var(--bg);transform:translateX(100%);transition:transform 0.3s cubic-bezier(.25,.8,.25,1)}
+.overlay-slide.open{transform:translateX(0)}
+.overlay-header{display:flex;align-items:center;gap:12px;padding:max(50px,env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(14px);position:sticky;top:0;z-index:10}
+.overlay-back-btn{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;user-select:none}
+.overlay-back-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.overlay-header-title{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:-0.02em;flex:1}
+.overlay-header-title span{color:var(--pulse)}
+.dm-list{overflow-y:auto;scrollbar-width:none;height:calc(100vh - 110px)}
+.dm-list::-webkit-scrollbar{display:none}
+.dm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 30px;text-align:center}
+.dm-empty-icon{font-size:44px;opacity:0.3}
+.dm-empty-text{font-size:14px;color:var(--muted);line-height:1.55}
+.dm-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background 0.15s;user-select:none}
+.dm-item:active{background:var(--surface)}
+.dm-item-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#000;flex-shrink:0;position:relative;overflow:hidden}
+.dm-item-av img{width:100%;height:100%;object-fit:cover}
+.dm-online-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--pulse);border:2px solid var(--bg)}
+.dm-item-info{flex:1;min-width:0}
+.dm-item-name{font-size:15px;font-weight:600;color:var(--text)}
+.dm-item-preview{font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dm-item-preview.unread{color:var(--text);font-weight:500}
+.dm-item-time{font-size:11px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+.dm-unread-badge{width:18px;height:18px;border-radius:50%;background:var(--pulse);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#000;font-family:var(--mono);flex-shrink:0}
+.dm-divider{height:1px;background:var(--dim);margin:0 16px}
+#chatOverlay{position:fixed;inset:0;z-index:500;background:var(--bg);transform:translateX(100%);transition:transform 0.3s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column}
+#chatOverlay.open{transform:translateX(0)}
+.chat-header{display:flex;align-items:center;gap:10px;padding:max(50px,env(safe-area-inset-top)) 14px 12px;border-bottom:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(14px);flex-shrink:0}
+.chat-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;flex-shrink:0;overflow:hidden}
+.chat-av img{width:100%;height:100%;object-fit:cover}
+.chat-user-info{flex:1;min-width:0}
+.chat-user-name{font-size:15px;font-weight:700}
+.chat-user-status{font-size:11px;color:var(--pulse);margin-top:1px}
+.chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
+.chat-body::-webkit-scrollbar{display:none}
+.msg-row{display:flex;align-items:flex-end;gap:8px}
+.msg-row.mine{flex-direction:row-reverse}
+.msg-bubble{max-width:72%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.45;word-break:break-word}
+.msg-bubble.theirs{background:var(--surface2);color:var(--text);border-bottom-left-radius:4px}
+.msg-bubble.mine{background:var(--pulse);color:#000;font-weight:500;border-bottom-right-radius:4px}
+.msg-time{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0;margin-bottom:2px}
+.msg-av-small{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9px;color:#000;flex-shrink:0;overflow:hidden}
+.msg-av-small img{width:100%;height:100%;object-fit:cover}
+.chat-date-sep{text-align:center;font-size:11px;color:var(--muted);font-family:var(--mono);margin:6px 0;letter-spacing:0.05em}
+.chat-input-bar{display:flex;align-items:center;gap:10px;padding:10px 14px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--dim);background:rgba(8,8,8,0.97);flex-shrink:0}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--dim);border-radius:22px;padding:10px 16px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;caret-color:var(--pulse);transition:border-color 0.2s;resize:none;max-height:100px;line-height:1.4;user-select:auto}
+.chat-input:focus{border-color:rgba(0,255,135,0.35)}
+.chat-send{width:40px;height:40px;border-radius:50%;background:var(--pulse);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform 0.15s}
+.chat-send:active{transform:scale(0.9)}
+.chat-send svg{width:18px;height:18px;stroke:#000;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ══════════════════════════════════════════
+   MAP
+══════════════════════════════════════════ */
+#map-screen{background:#070b0c}
+.map-header{position:absolute;top:0;left:0;right:0;z-index:10;padding:max(46px,env(safe-area-inset-top)) 20px 14px;background:linear-gradient(to bottom,rgba(7,11,12,1) 65%,transparent)}
+.map-title{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:-0.02em}
+.map-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.map-loc-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,135,0.08);border:1px solid rgba(0,255,135,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--pulse);font-family:var(--mono);margin-top:8px}
+canvas{display:block;width:100%;height:100%}
+.map-stats{position:absolute;top:135px;right:16px;display:flex;flex-direction:column;gap:10px}
+.mstat{background:rgba(7,11,12,0.88);border:1px solid var(--dim);border-radius:12px;padding:11px 13px;backdrop-filter:blur(12px);min-width:74px}
+.mstat-num{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--pulse)}
+.mstat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.07em}
+.map-legend{position:absolute;bottom:20px;left:16px;background:rgba(7,11,12,0.9);border:1px solid var(--dim);border-radius:13px;padding:12px 15px;backdrop-filter:blur(16px)}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:6px}
+.leg-item:last-child{margin-bottom:0}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ══════════════════════════════════════════
+   MY PROFILE + EDIT
+══════════════════════════════════════════ */
+#profile-screen{overflow-y:scroll;scrollbar-width:none}
+#profile-screen::-webkit-scrollbar{display:none}
+.p-top{position:relative;padding:max(54px,env(safe-area-inset-top)) 20px 0;min-height:195px}
+.p-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 40% 0%,rgba(0,255,135,0.09) 0%,transparent 70%);pointer-events:none}
+.p-av-wrap{position:relative;width:74px;height:74px}
+.p-av{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,var(--pulse),var(--pulse2));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#000;position:relative;border:3px solid var(--bg);overflow:hidden}
+.p-av img{width:100%;height:100%;object-fit:cover}
+.p-crown{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:17px}
+.p-av-edit-badge{position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--pulse);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;z-index:2}
+.p-name-row{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
+.p-name{font-size:21px;font-weight:700;letter-spacing:-0.02em}
+.p-verified{width:20px;height:20px;background:linear-gradient(135deg,var(--pulse),var(--pulse2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:700}
+.p-star{background:rgba(0,255,135,0.08);border:1px solid rgba(0,255,135,0.2);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--pulse);font-weight:700;letter-spacing:0.05em}
+.p-handle{font-size:13px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.p-loc{font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:4px}
+.p-bio{padding:12px 20px 0;font-size:14px;color:rgba(255,255,255,0.68);line-height:1.55;font-weight:300}
+.p-tags{display:flex;gap:7px;padding:10px 20px 0;flex-wrap:wrap}
+.ptag{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--dim);color:var(--muted);font-weight:500}
+.p-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--dim);border-radius:14px;overflow:hidden;margin:18px 20px 0;border:1px solid var(--dim)}
+.pstat{background:var(--surface);padding:14px 8px;text-align:center}
+.pstat-num{font-family:var(--mono);font-size:17px;font-weight:700}
+.pstat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.07em}
+.p-btns{display:flex;gap:10px;padding:14px 20px 0}
+.p-btn-e{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--dim);border-radius:13px;padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.p-btn-e:active{background:var(--surface3)}
+.p-btn-s{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--dim);border-radius:13px;padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.p-grid-lbl{padding:18px 20px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.09em;font-weight:600;border-top:1px solid var(--dim);margin-top:16px}
+.p-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding-bottom:20px}
+.pgitem{aspect-ratio:1;background:var(--surface2);position:relative;overflow:hidden;cursor:pointer}
+.pgitem-in{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:min(34px,8vw)}
+.pgviews{position:absolute;bottom:4px;left:5px;font-size:10px;color:rgba(255,255,255,0.85);font-weight:700;font-family:var(--mono);text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+
+/* EDIT PROFILE OVERLAY */
+#editProfileOverlay{position:fixed;inset:0;z-index:450;background:var(--bg);transform:translateY(100%);transition:transform 0.35s cubic-bezier(.25,.8,.25,1);overflow-y:auto;scrollbar-width:none}
+#editProfileOverlay::-webkit-scrollbar{display:none}
+#editProfileOverlay.open{transform:translateY(0)}
+.edit-header{display:flex;align-items:center;justify-content:space-between;padding:max(50px,env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(14px);position:sticky;top:0;z-index:10}
+.edit-header-title{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:-0.02em}
+.edit-header-title span{color:var(--pulse)}
+.edit-save-btn{background:var(--pulse);color:#000;border:none;border-radius:20px;padding:8px 20px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.2s}
+.edit-save-btn:active{opacity:0.8}
+.edit-body{padding:24px 20px;display:flex;flex-direction:column;gap:20px;padding-bottom:60px}
+.edit-av-section{display:flex;flex-direction:column;align-items:center;gap:12px}
+.edit-av-preview{width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--dim);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#000;position:relative}
+.edit-av-preview img{width:100%;height:100%;object-fit:cover}
+.edit-av-btn{background:var(--surface2);border:1px solid var(--dim);border-radius:22px;padding:8px 18px;font-size:13px;color:var(--text);cursor:pointer;font-family:var(--font);font-weight:500;transition:background 0.2s}
+.edit-av-btn:active{background:var(--surface3)}
+.edit-field{display:flex;flex-direction:column;gap:8px}
+.edit-lbl{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+.edit-inp{background:var(--surface2);border:1px solid var(--dim);border-radius:13px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;caret-color:var(--pulse);transition:border-color 0.2s;width:100%;user-select:auto}
+.edit-inp:focus{border-color:rgba(0,255,135,0.35)}
+.edit-inp::placeholder{color:var(--muted)}
+.edit-textarea{resize:none;min-height:90px;line-height:1.5}
+.edit-loc-row{display:flex;align-items:center;gap:10px}
+.edit-loc-inp{flex:1}
+.edit-loc-btn{background:rgba(0,255,135,0.08);border:1px solid rgba(0,255,135,0.2);border-radius:13px;padding:13px 14px;color:var(--pulse);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background 0.2s}
+.edit-loc-btn:active{background:rgba(0,255,135,0.15)}
+.edit-char-count{font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
+.edit-section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;border-top:1px solid var(--dim);padding-top:20px}
+
+/* TOAST / NOTIF */
+.toast{position:fixed;bottom:calc(var(--nav) + 14px);left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--dim);border-radius:13px;padding:10px 17px;font-size:13px;color:var(--text);opacity:0;transition:opacity 0.28s,transform 0.28s;pointer-events:none;white-space:nowrap;z-index:700;backdrop-filter:blur(12px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.notif{position:fixed;top:max(18px,env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-80px);z-index:800;background:rgba(0,255,135,0.1);border:1px solid rgba(0,255,135,0.3);border-radius:22px;padding:10px 20px;font-size:13px;color:var(--pulse);font-weight:600;white-space:nowrap;transition:transform 0.38s cubic-bezier(.34,1.56,.64,1),opacity 0.38s;opacity:0;backdrop-filter:blur(16px)}
+.notif.show{transform:translateX(-50%) translateY(0);opacity:1}
+/* GEAR BUTTON ON PROFILE */
+.p-gear-btn{position:absolute;top:max(50px,env(safe-area-inset-top));right:16px;width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;z-index:5}
+.p-gear-btn:active{background:var(--surface3)}
+.p-gear-btn svg{width:18px;height:18px;stroke:var(--text)}
+
+/* SETTINGS OVERLAY */
+#settingsOverlay{position:fixed;inset:0;z-index:450;background:var(--bg);transform:translateX(100%);transition:transform 0.35s cubic-bezier(.25,.8,.25,1);overflow-y:auto;scrollbar-width:none}
+#settingsOverlay::-webkit-scrollbar{display:none}
+#settingsOverlay.open{transform:translateX(0)}
+.settings-body{padding:16px 16px 40px}
+.settings-section-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;padding:20px 4px 8px}
+.settings-group{background:var(--surface);border:1px solid var(--dim);border-radius:16px;overflow:hidden;margin-bottom:4px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;transition:background 0.15s;gap:12px}
+.settings-row:active{background:var(--surface2)}
+.settings-row-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.settings-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.settings-icon svg{width:17px;height:17px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.settings-row-text{min-width:0}
+.settings-row-title{font-size:14px;font-weight:500;color:var(--text)}
+.settings-row-sub{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-chevron{font-size:20px;color:var(--muted);flex-shrink:0;line-height:1}
+.settings-divider{height:1px;background:var(--dim);margin:0 16px}
+.settings-toggle{width:46px;height:26px;border-radius:13px;background:var(--dim);position:relative;cursor:pointer;transition:background 0.25s;flex-shrink:0}
+.settings-toggle.active{background:var(--pulse)}
+.toggle-inner{width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform 0.25s,background 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.settings-toggle.active .toggle-inner{transform:translateX(20px)}
+.settings-select{font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.settings-logout-btn{width:100%;margin-top:28px;background:rgba(255,0,110,0.08);color:var(--pulse3);border:1px solid rgba(255,0,110,0.2);border-radius:14px;padding:15px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background 0.2s}
+.settings-logout-btn:active{background:rgba(255,0,110,0.15)}
+
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="toast" id="toast"></div>
+<div class="notif" id="notif"></div>
+<input type="file" id="avatarFilePicker" accept="image/*">
+
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-glow"></div>
+  <div class="auth-logo">pul<span>se</span></div>
+  <div class="auth-tagline">Conectate con lo que pasa<br>cerca tuyo, ahora mismo.</div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="authTabReg" onclick="switchAuthTab('register')">Crear cuenta</div>
+      <div class="auth-tab" id="authTabLog" onclick="switchAuthTab('login')">Iniciar sesión</div>
+    </div>
+
+    <!-- REGISTER FIELDS -->
+    <div id="registerFields">
+      <div class="auth-field">
+        <div class="auth-label">Nombre completo</div>
+        <input class="auth-input" id="regName" type="text" placeholder="Ej: Lucas García" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Nombre de usuario</div>
+        <input class="auth-input" id="regHandle" type="text" placeholder="@tu_usuario" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Email</div>
+        <input class="auth-input" id="regEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Contraseña</div>
+        <input class="auth-input" id="regPass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="auth-error" id="regError"></div>
+      <button class="auth-btn" onclick="doRegister()">Crear cuenta →</button>
+    </div>
+
+    <!-- LOGIN FIELDS -->
+    <div id="loginFields" style="display:none">
+      <div class="auth-field">
+        <div class="auth-label">Email</div>
+        <input class="auth-input" id="logEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Contraseña</div>
+        <input class="auth-input" id="logPass" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+      </div>
+      <div class="auth-error" id="logError"></div>
+      <button class="auth-btn" onclick="doLogin()">Entrar →</button>
+    </div>
+
+    <div class="auth-divider">
+      <div class="auth-divider-line"></div>
+      <div class="auth-divider-text">o continuá con</div>
+      <div class="auth-divider-line"></div>
+    </div>
+
+    <button class="google-btn" onclick="doGoogleLogin()">
+      <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continuar con Google
+    </button>
+  </div>
+
+  <div class="auth-terms">Al continuar, aceptás los <span>Términos de servicio</span><br>y la <span>Política de privacidad</span> de Pulse.</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+
+<!-- FEED -->
+<div class="screen active" id="feed-screen">
+  <div class="feed-header">
+    <div class="feed-top-row">
+      <div class="logo">pul<span>se</span></div>
+      <div class="msg-icon-btn" onclick="openMessages()">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <div class="msg-badge" id="msgBadge">3</div>
+      </div>
+    </div>
+    <div class="feed-tabs">
+      <div class="feed-tab active" id="tab-nb" onclick="setTab('nearby')">📍 Cercanos</div>
+      <div class="feed-tab" id="tab-fl" onclick="setTab('following')">💜 Siguiendo</div>
+    </div>
+  </div>
+  <div class="feed-container" id="feedContainer"></div>
+</div>
+
+<!-- SEARCH -->
+<div class="screen" id="search-screen">
+  <div class="search-header">
+    <div class="search-title">bus<span>car</span></div>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Buscar personas..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="clear-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+  <div id="searchDefault">
+    <div class="search-section-lbl">🔥 Populares cerca tuyo</div>
+    <div id="suggestedList"></div>
+    <div class="search-section-lbl" style="margin-top:8px">🏷️ Explorar</div>
+    <div class="trending-wrap">
+      <div class="trend-pill" onclick="searchFor('música')">🎵 Música</div>
+      <div class="trend-pill" onclick="searchFor('fotos')">📸 Fotos</div>
+      <div class="trend-pill" onclick="searchFor('merlo')">📍 Merlo</div>
+      <div class="trend-pill" onclick="searchFor('baile')">💃 Baile</div>
+      <div class="trend-pill" onclick="searchFor('skate')">🛹 Skate</div>
+      <div class="trend-pill" onclick="searchFor('arte')">🎨 Arte</div>
+      <div class="trend-pill" onclick="searchFor('comida')">🍕 Comida</div>
+      <div class="trend-pill" onclick="searchFor('estrellas')">⭐ Estrellas</div>
+    </div>
+  </div>
+  <div id="searchResults" style="display:none"></div>
+</div>
+
+<!-- MAP -->
+<div class="screen" id="map-screen">
+  <div class="map-header">
+    <div class="map-title">Mapa de Calor</div>
+    <div class="map-sub">Actividad en tiempo real</div>
+    <div class="map-loc-badge" id="mapLocBadge">📍 Obteniendo ubicación...</div>
+  </div>
+  <canvas id="heatCanvas"></canvas>
+  <div class="map-stats">
+    <div class="mstat"><div class="mstat-num" id="onlineCount">247</div><div class="mstat-lbl">Online</div></div>
+    <div class="mstat"><div class="mstat-num" id="nearbyCount">18</div><div class="mstat-lbl">Cercanos</div></div>
+  </div>
+  <div class="map-legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#ff006e"></div>Alta actividad</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ff8c00"></div>Media actividad</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#00d4ff"></div>Poca actividad</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#00ff87"></div>Tu ubicación</div>
+  </div>
+</div>
+
+<!-- MY PROFILE -->
+<div class="screen" id="profile-screen">
+  <div class="p-top">
+    <div class="p-glow"></div>
+    <!-- gear icon top-right -->
+    <div class="p-gear-btn" onclick="openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+    <div class="p-av-wrap">
+      <div class="p-av" id="myAvatar"><div class="p-crown">⭐</div><span id="myAvatarInitials">MR</span></div>
+      <div class="p-av-edit-badge" onclick="openEditProfile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+    </div>
+    <div class="p-name-row">
+      <div class="p-name" id="myName">Mia Reyes</div>
+      <div class="p-verified">✓</div>
+      <div class="p-star">ESTRELLA</div>
+    </div>
+    <div class="p-handle" id="myHandle">@miareyes</div>
+    <div class="p-loc" id="myLoc">📍 Obteniendo ubicación...</div>
+  </div>
+  <div class="p-bio" id="myBio">Capturando el momento exacto. 📍 Siempre cerca.<br>Creadora de contenido local.</div>
+  <div class="p-tags"><div class="ptag">🎵 Música</div><div class="ptag">📸 Fotos</div><div class="ptag">🏙️ Ciudad</div><div class="ptag">🌙 Noche</div></div>
+  <div class="p-stats">
+    <div class="pstat"><div class="pstat-num">12.4K</div><div class="pstat-lbl">Pulses</div></div>
+    <div class="pstat"><div class="pstat-num" id="myFollowers">89.2K</div><div class="pstat-lbl">Seguidores</div></div>
+    <div class="pstat"><div class="pstat-num">2.1M</div><div class="pstat-lbl">Views</div></div>
+  </div>
+  <div class="p-btns">
+    <button class="p-btn-e" onclick="openEditProfile()">Editar perfil</button>
+    <button class="p-btn-s" onclick="shareProfile()">Compartir perfil</button>
+  </div>
+  <div class="p-grid-lbl">📍 Mis Pulses</div>
+  <div class="p-grid" id="profileGrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     EDIT PROFILE OVERLAY
+══════════════════════════════════════════ -->
+<div id="editProfileOverlay">
+  <div class="edit-header">
+    <div class="overlay-back-btn" onclick="closeEditProfile()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="edit-header-title">editar <span>perfil</span></div>
+    <button class="edit-save-btn" onclick="saveProfile()">Guardar</button>
+  </div>
+  <div class="edit-body">
+    <div class="edit-av-section">
+      <div class="edit-av-preview" id="editAvPreview" style="background:linear-gradient(135deg,#00ff87,#00d4ff)">
+        <span id="editAvInitials">MR</span>
+      </div>
+      <button class="edit-av-btn" onclick="document.getElementById('avatarFilePicker').click()">📷 Cambiar foto de perfil</button>
+    </div>
+
+    <div class="edit-section-title">Información básica</div>
+
+    <div class="edit-field">
+      <div class="edit-lbl">Nombre completo</div>
+      <input class="edit-inp" id="editName" type="text" placeholder="Tu nombre" maxlength="40" oninput="updateCharCount('editName','nameCount',40)">
+      <div class="edit-char-count"><span id="nameCount">0</span>/40</div>
+    </div>
+
+    <div class="edit-field">
+      <div class="edit-lbl">Nombre de usuario</div>
+      <input class="edit-inp" id="editHandle" type="text" placeholder="@tu_usuario" maxlength="20" oninput="updateCharCount('editHandle','handleCount',20)">
+      <div class="edit-char-count"><span id="handleCount">0</span>/20</div>
+    </div>
+
+    <div class="edit-field">
+      <div class="edit-lbl">Descripción</div>
+      <textarea class="edit-inp edit-textarea" id="editBio" placeholder="Contá algo sobre vos..." maxlength="150" oninput="updateCharCount('editBio','bioCount',150)"></textarea>
+      <div class="edit-char-count"><span id="bioCount">0</span>/150</div>
+    </div>
+
+    <div class="edit-field">
+      <div class="edit-lbl">Ubicación</div>
+      <div class="edit-loc-row">
+        <input class="edit-inp edit-loc-inp" id="editLoc" type="text" placeholder="Tu ciudad" readonly>
+        <button class="edit-loc-btn" onclick="getGPSLocation()">📍 GPS</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Se actualiza automáticamente con tu ubicación real</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SETTINGS OVERLAY
+══════════════════════════════════════════ -->
+<div id="settingsOverlay">
+  <div class="edit-header">
+    <div class="overlay-back-btn" onclick="closeSettings()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="edit-header-title">confi<span>guración</span></div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="settings-body">
+
+    <div class="settings-section-label">Cuenta</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openEditProfile();closeSettings()">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,255,135,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Editar perfil</div>
+            <div class="settings-row-sub">Nombre, foto, descripción</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row" onclick="toast('📧 Cambio de email próximamente')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,212,255,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Cambiar email</div>
+            <div class="settings-row-sub" id="settingsEmailSub">tu@email.com</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row" onclick="toast('🔑 Cambio de contraseña próximamente')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,140,0,0.1)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Cambiar contraseña</div>
+            <div class="settings-row-sub">Actualizá tu seguridad</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="settings-section-label">Privacidad</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(168,85,247,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Cuenta privada</div>
+            <div class="settings-row-sub">Solo seguidores ven tus Pulses</div>
+          </div>
+        </div>
+        <div class="settings-toggle" id="togglePrivate" onclick="toggleSetting('private')">
+          <div class="toggle-inner"></div>
+        </div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,255,135,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Mostrar ubicación</div>
+            <div class="settings-row-sub">Visible en el mapa de calor</div>
+          </div>
+        </div>
+        <div class="settings-toggle active" id="toggleLocation" onclick="toggleSetting('location')">
+          <div class="toggle-inner"></div>
+        </div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,212,255,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Mensajes directos</div>
+            <div class="settings-row-sub">Quién puede escribirte</div>
+          </div>
+        </div>
+        <div class="settings-select" onclick="cycleDMs()">
+          <span id="dmsSetting">Todos</span> ›
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section-label">Notificaciones</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,0,110,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Notificaciones push</div>
+            <div class="settings-row-sub">Likes, comentarios, seguidores</div>
+          </div>
+        </div>
+        <div class="settings-toggle active" id="toggleNotifs" onclick="toggleSetting('notifs')">
+          <div class="toggle-inner"></div>
+        </div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,255,135,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Actividad cercana</div>
+            <div class="settings-row-sub">Alertas cuando hay Pulses cerca</div>
+          </div>
+        </div>
+        <div class="settings-toggle active" id="toggleNearby" onclick="toggleSetting('nearby')">
+          <div class="toggle-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section-label">Apariencia</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,255,255,0.06)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Modo oscuro</div>
+            <div class="settings-row-sub">Siempre activo en Pulse</div>
+          </div>
+        </div>
+        <div class="settings-toggle active" style="opacity:0.45;pointer-events:none" id="toggleDark">
+          <div class="toggle-inner"></div>
+        </div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row" onclick="toast('🎞️ Calidad de video próximamente')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(0,212,255,0.1)">
+            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Calidad de video</div>
+            <div class="settings-row-sub">1080p · Auto</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+    </div>
+
+    <div class="settings-section-label">Soporte</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="toast('❓ Centro de ayuda próximamente')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,140,0,0.1)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Ayuda y soporte</div>
+            <div class="settings-row-sub">Centro de ayuda de Pulse</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row" onclick="toast('⚠️ Reporte enviado. Gracias.')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,0,110,0.1)">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Reportar un problema</div>
+            <div class="settings-row-sub">Bugs o contenido inapropiado</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row" onclick="toast('ℹ️ Pulse v1.0.0 · Hecho con ❤️')">
+        <div class="settings-row-left">
+          <div class="settings-icon" style="background:rgba(255,255,255,0.06)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Acerca de Pulse</div>
+            <div class="settings-row-sub">Versión 1.0.0</div>
+          </div>
+        </div>
+        <div class="settings-chevron">›</div>
+      </div>
+    </div>
+
+    <!-- LOGOUT AT BOTTOM -->
+    <button class="settings-logout-btn" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Cerrar sesión
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CAMERA OVERLAY
+══════════════════════════════════════════ -->
+<div id="cameraOverlay">
+  <video id="cameraPreview" autoplay muted playsinline></video>
+  <div class="cam-top-bar">
+    <div class="cam-close" onclick="closeCamera()">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <div class="cam-timer-display" id="camTimerDisplay">0:00</div>
+    <div class="cam-flip" onclick="flipCamera()">
+      <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+    </div>
+  </div>
+  <div class="cam-bottom">
+    <div class="cam-progress-wrap">
+      <div class="cam-progress-bar" id="camProgressBar"></div>
+    </div>
+    <div class="cam-record-btn" id="camRecordBtn" onclick="toggleCameraRecord()">
+      <div class="cam-record-inner"></div>
+    </div>
+    <div class="cam-hint" id="camHint">Tocá para grabar · máx. 10 seg</div>
+  </div>
+</div>
+
+<!-- MESSAGES -->
+<div class="overlay-slide" id="messagesOverlay">
+  <div class="overlay-header">
+    <div class="overlay-back-btn" onclick="closeMessages()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="overlay-header-title">men<span>sajes</span></div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="dm-list" id="dmList"></div>
+</div>
+
+<!-- CHAT -->
+<div id="chatOverlay">
+  <div class="chat-header">
+    <div class="overlay-back-btn" onclick="closeChat()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="chat-av" id="chatAv"></div>
+    <div class="chat-user-info">
+      <div class="chat-user-name" id="chatName"></div>
+      <div class="chat-user-status" id="chatStatus">● En línea</div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input-bar">
+    <textarea class="chat-input" id="chatInput" placeholder="Escribí un mensaje..." rows="1" onkeydown="handleChatKey(event)" oninput="autoGrow(this)"></textarea>
+    <div class="chat-send" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- USER PROFILE OVERLAY -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="ov-back" onclick="closeProfileOverlay()">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Volver</span>
+  </div>
+  <div id="overlayContent"></div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-btn" id="nav-map" onclick="go('map')">
+    <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    <div class="nav-dot"></div><div class="nav-lbl">Mapa</div>
+  </div>
+  <div class="nav-btn" id="nav-search" onclick="go('search')">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div class="nav-dot"></div><div class="nav-lbl">Buscar</div>
+  </div>
+  <!-- RED CIRCLE REC BUTTON -->
+  <div class="rec-wrap">
+    <div class="rec-outer" id="recBtn" onclick="openCamera()">
+      <div class="rec-inner-sq"></div>
+    </div>
+  </div>
+  <div class="nav-btn active" id="nav-feed" onclick="go('feed')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polygon points="10 8 16 12 10 16 10 8" style="fill:var(--muted)" stroke="none"/></svg>
+    <div class="nav-dot"></div><div class="nav-lbl">Feed</div>
+  </div>
+  <div class="nav-btn" id="nav-profile" onclick="go('profile')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <div class="nav-dot"></div><div class="nav-lbl">Perfil</div>
+  </div>
+</div>
+</div><!-- end .app -->
+
+<script>
+/* ══════════════════════════════════════════
+   DATA
+══════════════════════════════════════════ */
+const ALL_USERS=[
+  {id:1,name:'Lucas García',handle:'@lucasg',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,dist:'280m',followers:'4.2K',pulses:'342',views:'87K',bio:'Fotógrafo amateur. Plaza Merlo todos los días.',tags:['📸 Fotos','🌆 Ciudad','🌅 Atardeceres'],emojis:['🌆','📸','🌃','🏙️','🌇','🌉','📷','🌄','🏛️','🚶','🌠','🎞️'],vl:['1.2K','890','2.4K','456','3.1K','78','1.8K','234','5.4K','901','1.1K','677']},
+  {id:2,name:'Mia Reyes',handle:'@miareyes',av:'MR',avc:'linear-gradient(135deg,#ff006e,#ff8c00)',star:true,dist:'1.2km',followers:'89.2K',pulses:'1.2K',views:'2.1M',bio:'Capturando el momento exacto.',tags:['🎵 Música','📸 Fotos','🏙️ Ciudad'],emojis:['🎵','🎤','🎧','🎶','🎼','🎹','🎸','🥁','🎺','🎻','🎙️','🔊'],vl:['18K','12K','34K','8.9K','45K','3.2K','21K','9.1K','67K','11K','5.4K','28K']},
+  {id:3,name:'Tomás Torres',handle:'@tomast',av:'TT',avc:'linear-gradient(135deg,#00d4ff,#0066ff)',star:false,dist:'450m',followers:'1.8K',pulses:'189',views:'34K',bio:'El cielo desde mi terraza. Merlo, BsAs.',tags:['🌌 Cielo','🔭 Astro','📸 Fotos'],emojis:['🌌','🔭','⭐','🌙','☀️','🌠','🪐','🌟','💫','🌌','🔭','🌛'],vl:['876','541','1.2K','234','987','123','654','321','1.8K','432','765','543']},
+  {id:4,name:'Sofía Keller',handle:'@sof_dance',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,dist:'90m',followers:'34.2K',pulses:'567',views:'890K',bio:'Bailarina profesional. ¡El movimiento es vida!',tags:['💃 Baile','🎵 Música','✨ Vida'],emojis:['💃','🕺','🎭','✨','🎪','🎠','💫','🌈','🎉','🎊','🎶','🌟'],vl:['34K','28K','56K','12K','78K','4.5K','23K','45K','91K','15K','8.7K','34K']},
+  {id:5,name:'Fede Jiménez',handle:'@fedej',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,dist:'1.8km',followers:'2.3K',pulses:'421',views:'56K',bio:'Skate vida. Merlo tiene el mejor skate park.',tags:['🛹 Skate','🔥 Tricks','🏙️ Calle'],emojis:['🛹','🔥','💨','🤙','⚡','🎯','💪','🏆','🛼','🎪','🏄','🤸'],vl:['1.2K','890','3.4K','567','2.1K','234','1.8K','456','4.5K','678','1.1K','890']},
+  {id:6,name:'Karla Vega',handle:'@karlav',av:'KV',avc:'linear-gradient(135deg,#a855f7,#ec4899)',star:true,dist:'3.4km',followers:'12.1K',pulses:'893',views:'456K',bio:'Golden hour hunter. Arte y color en cada Pulse.',tags:['🌅 Sunsets','🎨 Arte','💜 Vida'],emojis:['🌅','🎨','💜','🌈','✨','🖌️','🌸','🦋','🌺','🎭','💐','🌻'],vl:['9.8K','7.2K','15K','3.4K','22K','1.8K','11K','5.6K','34K','4.3K','8.9K','17K']},
+  {id:7,name:'Rami Ortega',handle:'@ramio',av:'RO',avc:'linear-gradient(135deg,#00ff87,#00aa44)',star:false,dist:'620m',followers:'890',pulses:'78',views:'12K',bio:'Comida casera y mucho amor. 🍕🌮',tags:['🍕 Comida','🌮 Cocina','❤️ Familia'],emojis:['🍕','🌮','🍔','🍝','🥗','🍜','🌯','🧆','🥙','🍱','🥘','🍲'],vl:['456','234','789','123','567','89','345','210','678','456','234','567']},
+  {id:8,name:'Vale Ríos',handle:'@vale.rios',av:'VR',avc:'linear-gradient(135deg,#ff8c00,#ffcc00)',star:false,dist:'2.1km',followers:'3.4K',pulses:'234',views:'78K',bio:'Arte urbano en las calles de Merlo. ✍️',tags:['🎨 Arte','🏙️ Urbano','✍️ Graffiti'],emojis:['🎨','✍️','🖌️','🏙️','🌆','🎭','🖼️','🎪','🌈','💥','⚡','🔥'],vl:['3.4K','1.2K','5.6K','890','4.5K','234','2.3K','678','7.8K','1.1K','3.4K','2.1K']},
+];
+
+const CONVOS={
+  1:[{mine:false,text:'Ey! Vi tu Pulse del atardecer 🔥',time:'Ayer'},{mine:true,text:'¡Gracias! Fue desde la plaza nueva',time:'Ayer'},{mine:false,text:'Queda cerca de donde vivo, voy mañana',time:'Ayer'},{mine:true,text:'Dale! La luz a las 7pm es increíble',time:'Ayer'},{mine:false,text:'Perfecto 📸 Te mando fotos',time:'10:30'}],
+  4:[{mine:false,text:'Holaa! Me encantó tu último Pulse 💃',time:'Lunes'},{mine:true,text:'¡Gracias Sofía!! 🙏 El tuyo del ensayo estuvo increíble',time:'Lunes'},{mine:false,text:'Jeje gracias 😊 ¿Colaboramos algún día?',time:'Lunes'},{mine:true,text:'Me encantaría!! Mandame DM cuando quieras',time:'Martes'},{mine:false,text:'Dale! Esta semana tengo tiempo 🎵',time:'Hoy'},{mine:false,text:'¿El jueves te viene bien?',time:'Hoy'}],
+  6:[{mine:false,text:'Tu foto del golden hour me salvó el día ✨',time:'Hoy'},{mine:false,text:'¿Dónde fue exactamente?',time:'Hoy'}],
+};
+const DMS=[
+  {userId:4,preview:'¿El jueves te viene bien?',time:'Hoy',unread:2,online:true},
+  {userId:6,preview:'¿Dónde fue exactamente?',time:'Hoy',unread:1,online:true},
+  {userId:1,preview:'Te mando fotos',time:'10:30',unread:0,online:false},
+];
+
+const POSTS_NEARBY=[
+  {id:1,userId:1,user:'@lucasg',name:'Lucas G.',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,nearby:true,dist:'280m',caption:'Tarde perfecta en la plaza 🌇',bg:'linear-gradient(160deg,#0d1b2a,#1a3a2a,#0a2a1a)',emoji:'🌆',likes:2400,comments:'89',shares:'34'},
+  {id:3,userId:3,user:'@tomast',name:'Tomás T.',av:'TT',avc:'linear-gradient(135deg,#00d4ff,#0066ff)',star:false,nearby:true,dist:'450m',caption:'El cielo desde la terraza 🔥',bg:'linear-gradient(160deg,#0a1a2a,#0a1520,#050a10)',emoji:'🌌',likes:876,comments:'41',shares:'12'},
+  {id:4,userId:4,user:'@sof_dance',name:'Sofía K.',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,nearby:true,dist:'90m',caption:'¡Ensayo nuevo! ¿Lo ven? 👀',bg:'linear-gradient(160deg,#1a0a1a,#2a0a2a,#100010)',emoji:'💃',likes:34200,comments:'1.8K',shares:'4.7K'},
+  {id:5,userId:5,user:'@fedej',name:'Fede J.',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,nearby:true,dist:'1.8km',caption:'Skate park vacío 🛹',bg:'linear-gradient(160deg,#1a1200,#2a1e00,#0f0a00)',emoji:'🛹',likes:1200,comments:'67',shares:'89'},
+  {id:7,userId:7,user:'@ramio',name:'Rami O.',av:'RO',avc:'linear-gradient(135deg,#00ff87,#00aa44)',star:false,nearby:true,dist:'620m',caption:'Pizza de masa madre 🍕',bg:'linear-gradient(160deg,#1a1200,#1a0800,#0f0600)',emoji:'🍕',likes:543,comments:'29',shares:'8'},
+];
+const POSTS_FOLLOWING_DATA={
+  2:{id:2,userId:2,user:'@miareyes',name:'Mia Reyes',av:'MR',avc:'linear-gradient(135deg,#ff006e,#ff8c00)',star:true,nearby:false,dist:'1.2km',caption:'Nuevo set listo ✨',bg:'linear-gradient(160deg,#1a0a20,#2d0a3a,#1a0020)',emoji:'🎵',likes:18700,comments:'934',shares:'2.1K'},
+  4:{id:4,userId:4,user:'@sof_dance',name:'Sofía K.',av:'SK',avc:'linear-gradient(135deg,#ff006e,#9d00ff)',star:true,nearby:true,dist:'90m',caption:'¡Ensayo nuevo! 👀',bg:'linear-gradient(160deg,#1a0a1a,#2a0a2a,#100010)',emoji:'💃',likes:34200,comments:'1.8K',shares:'4.7K'},
+  6:{id:6,userId:6,user:'@karlav',name:'Karla V.',av:'KV',avc:'linear-gradient(135deg,#a855f7,#ec4899)',star:true,nearby:false,dist:'3.4km',caption:'Golden hour 🌅',bg:'linear-gradient(160deg,#1a0d14,#2a1020,#150010)',emoji:'🌅',likes:9800,comments:'423',shares:'1.1K'},
+  1:{id:1,userId:1,user:'@lucasg',name:'Lucas G.',av:'LG',avc:'linear-gradient(135deg,#00ff87,#00d4ff)',star:false,nearby:true,dist:'280m',caption:'Tarde perfecta en la plaza 🌇',bg:'linear-gradient(160deg,#0d1b2a,#1a3a2a,#0a2a1a)',emoji:'🌆',likes:2400,comments:'89',shares:'34'},
+  5:{id:5,userId:5,user:'@fedej',name:'Fede J.',av:'FJ',avc:'linear-gradient(135deg,#ffaa00,#ff4400)',star:false,nearby:true,dist:'1.8km',caption:'Skate park 🛹',bg:'linear-gradient(160deg,#1a1200,#2a1e00,#0f0a00)',emoji:'🛹',likes:1200,comments:'67',shares:'89'},
+};
+const GRID_E=['🌆','🎵','🌌','💃','🛹','🌅','🌃','🎤','🏙️','📸','🎧','🔥'];
+const GRID_V=['1.2K','890','2.4K','456','3.1K','78','1.8K','234','5.4K','901','1.1K','677'];
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let liked={},followed=new Set(),curTab='nearby',curOvUser=null,curChatUser=null;
+let myProfile={name:'Mia Reyes',handle:'@miareyes',bio:'Capturando el momento exacto. 📍 Siempre cerca.\nCreadora de contenido local.',location:'Merlo, BsAs',avatarUrl:null,avatarInitials:'MR',avatarGradient:'linear-gradient(135deg,#ff006e,#ff8c00)'};
+let myAvatarImg=null; // base64
+
+// Camera state
+let camStream=null,camFacing='environment',camRecording=false,camRecorder=null,camTimer=null,camSeconds=0;
+
+/* ══════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════ */
+let accounts={};
+
+function switchAuthTab(tab){
+  document.getElementById('authTabReg').classList.toggle('active',tab==='register');
+  document.getElementById('authTabLog').classList.toggle('active',tab==='login');
+  document.getElementById('registerFields').style.display=tab==='register'?'block':'none';
+  document.getElementById('loginFields').style.display=tab==='login'?'block':'none';
+}
+
+function showAuthError(id,msg){
+  const el=document.getElementById(id);el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',3500);
+}
+
+function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const handle=document.getElementById('regHandle').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPass').value;
+  if(!name||!handle||!email||!pass){showAuthError('regError','Completá todos los campos');return;}
+  if(pass.length<6){showAuthError('regError','La contraseña debe tener al menos 6 caracteres');return;}
+  if(accounts[email]){showAuthError('regError','Ya existe una cuenta con ese email');return;}
+  accounts[email]={name,handle:handle.startsWith('@')?handle:'@'+handle,pass};
+  myProfile.name=name;
+  myProfile.handle=handle.startsWith('@')?handle:'@'+handle;
+  myProfile.avatarInitials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  enterApp();
+}
+
+function doLogin(){
+  const email=document.getElementById('logEmail').value.trim();
+  const pass=document.getElementById('logPass').value;
+  if(!email||!pass){showAuthError('logError','Completá todos los campos');return;}
+  const acc=accounts[email];
+  if(!acc||acc.pass!==pass){showAuthError('logError','Email o contraseña incorrectos');return;}
+  myProfile.name=acc.name;myProfile.handle=acc.handle;
+  myProfile.avatarInitials=acc.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  enterApp();
+}
+
+function doGoogleLogin(){
+  // Simulate Google SSO
+  myProfile.name='Usuario Google';myProfile.handle='@usuario_google';
+  myProfile.avatarInitials='UG';
+  enterApp();
+}
+
+function enterApp(){
+  const auth=document.getElementById('authScreen');
+  auth.classList.add('hidden');
+  setTimeout(()=>auth.style.display='none',400);
+  updateProfileUI();
+  startGPS();
+  notif('👋 ¡Bienvenido/a a Pulse!');
+}
+
+function doLogout(){
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('authScreen').classList.remove('hidden');
+  // reset form
+  ['regName','regHandle','regEmail','regPass','logEmail','logPass'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  switchAuthTab('register');
+}
+
+/* ══════════════════════════════════════════
+   GPS / LOCATION
+══════════════════════════════════════════ */
+let geoWatchId=null;
+
+function startGPS(){
+  if(!navigator.geolocation){
+    myProfile.location='Ubicación no disponible';
+    updateProfileUI();return;
+  }
+  navigator.geolocation.getCurrentPosition(handleGPSSuccess,handleGPSError,{enableHighAccuracy:true});
+  geoWatchId=navigator.geolocation.watchPosition(handleGPSSuccess,handleGPSError,{enableHighAccuracy:true,maximumAge:30000,timeout:10000});
+}
+
+function handleGPSSuccess(pos){
+  const lat=pos.coords.latitude.toFixed(4);
+  const lng=pos.coords.longitude.toFixed(4);
+  reverseGeocode(lat,lng);
+}
+
+function handleGPSError(){
+  myProfile.location='Merlo, BsAs';
+  updateProfileUI();
+  document.getElementById('mapLocBadge').textContent='📍 Merlo, BsAs';
+}
+
+function reverseGeocode(lat,lng){
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`)
+    .then(r=>r.json())
+    .then(data=>{
+      const addr=data.address;
+      const city=addr.city||addr.town||addr.village||addr.municipality||addr.county||'';
+      const state=addr.state||'';
+      const loc=city?(city+(state?', '+state:'')):(state||`${lat}, ${lng}`);
+      myProfile.location=loc;
+      updateProfileUI();
+      document.getElementById('mapLocBadge').textContent='📍 '+loc;
+      document.getElementById('editLoc').value=loc;
+    })
+    .catch(()=>{
+      myProfile.location=`${lat}, ${lng}`;
+      updateProfileUI();
+      document.getElementById('mapLocBadge').textContent='📍 '+myProfile.location;
+    });
+}
+
+function getGPSLocation(){
+  document.getElementById('editLoc').value='Obteniendo...';
+  if(!navigator.geolocation){document.getElementById('editLoc').value='No disponible';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    reverseGeocode(pos.coords.latitude.toFixed(4),pos.coords.longitude.toFixed(4));
+    setTimeout(()=>{document.getElementById('editLoc').value=myProfile.location;},2000);
+  },()=>{document.getElementById('editLoc').value=myProfile.location;});
+}
+
+/* ══════════════════════════════════════════
+   PROFILE UI
+══════════════════════════════════════════ */
+function updateProfileUI(){
+  document.getElementById('myName').textContent=myProfile.name;
+  document.getElementById('myHandle').textContent=myProfile.handle;
+  document.getElementById('myBio').innerHTML=myProfile.bio.replace(/\n/g,'<br>');
+  document.getElementById('myLoc').textContent='📍 '+(myProfile.location||'...');
+
+  const av=document.getElementById('myAvatar');
+  const initSpan=document.getElementById('myAvatarInitials');
+  if(myAvatarImg){
+    av.style.background='none';
+    if(!av.querySelector('img')){
+      const img=document.createElement('img');img.id='myAvImg';av.prepend(img);
+    }
+    av.querySelector('img').src=myAvatarImg;
+    initSpan.style.display='none';
+  } else {
+    av.style.background=myProfile.avatarGradient;
+    initSpan.style.display='';
+    initSpan.textContent=myProfile.avatarInitials;
+    const img=av.querySelector('img');if(img)img.remove();
+  }
+}
+
+/* ══════════════════════════════════════════
+   EDIT PROFILE
+══════════════════════════════════════════ */
+function openEditProfile(){
+  document.getElementById('editName').value=myProfile.name;
+  updateCharCount('editName','nameCount',40);
+  document.getElementById('editHandle').value=myProfile.handle.replace('@','');
+  updateCharCount('editHandle','handleCount',20);
+  document.getElementById('editBio').value=myProfile.bio;
+  updateCharCount('editBio','bioCount',150);
+  document.getElementById('editLoc').value=myProfile.location||'';
+
+  // avatar preview
+  const prev=document.getElementById('editAvPreview');
+  const initSpan=document.getElementById('editAvInitials');
+  if(myAvatarImg){
+    prev.style.background='none';
+    if(!prev.querySelector('img')){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%';prev.appendChild(img);}
+    prev.querySelector('img').src=myAvatarImg;
+    initSpan.style.display='none';
+  } else {
+    prev.style.background=myProfile.avatarGradient;
+    initSpan.style.display='';initSpan.textContent=myProfile.avatarInitials;
+    const img=prev.querySelector('img');if(img)img.remove();
+  }
+
+  document.getElementById('editProfileOverlay').classList.add('open');
+}
+
+function closeEditProfile(){document.getElementById('editProfileOverlay').classList.remove('open');}
+
+function saveProfile(){
+  const name=document.getElementById('editName').value.trim();
+  const handle=document.getElementById('editHandle').value.trim();
+  const bio=document.getElementById('editBio').value.trim();
+  const loc=document.getElementById('editLoc').value.trim();
+  if(!name){toast('⚠️ El nombre no puede estar vacío');return;}
+  myProfile.name=name;
+  myProfile.handle='@'+handle.replace('@','');
+  myProfile.bio=bio;
+  myProfile.location=loc;
+  myProfile.avatarInitials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  updateProfileUI();
+  closeEditProfile();
+  notif('✅ Perfil actualizado');
+}
+
+function updateCharCount(inputId,countId,max){
+  const len=document.getElementById(inputId).value.length;
+  document.getElementById(countId).textContent=len;
+  document.getElementById(countId).style.color=len>max*0.85?'var(--pulse3)':'var(--muted)';
+}
+
+// Avatar file picker
+document.getElementById('avatarFilePicker').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    myAvatarImg=e.target.result;
+    // Update edit preview
+    const prev=document.getElementById('editAvPreview');
+    const initSpan=document.getElementById('editAvInitials');
+    prev.style.background='none';
+    if(!prev.querySelector('img')){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%';prev.appendChild(img);}
+    prev.querySelector('img').src=myAvatarImg;
+    initSpan.style.display='none';
+    toast('📷 Foto seleccionada · Guardá para aplicar');
+  };
+  reader.readAsDataURL(file);
+  this.value='';
+});
+
+/* ══════════════════════════════════════════
+   CAMERA
+══════════════════════════════════════════ */
+async function openCamera(){
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:true});
+    document.getElementById('cameraPreview').srcObject=camStream;
+    document.getElementById('cameraOverlay').classList.add('open');
+    document.getElementById('camHint').textContent='Tocá para grabar · máx. 10 seg';
+    document.getElementById('camProgressBar').style.width='0%';
+    document.getElementById('camTimerDisplay').classList.remove('visible');
+  } catch(e){
+    toast('📷 Permiso de cámara denegado');
+  }
+}
+
+function closeCamera(){
+  stopCamStream();
+  document.getElementById('cameraOverlay').classList.remove('open');
+  if(camTimer)clearInterval(camTimer);
+  camRecording=false;
+  document.getElementById('camRecordBtn').classList.remove('recording');
+  document.getElementById('recBtn').classList.remove('recording');
+}
+
+function stopCamStream(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+}
+
+async function flipCamera(){
+  camFacing=camFacing==='environment'?'user':'environment';
+  stopCamStream();
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:true});
+    document.getElementById('cameraPreview').srcObject=camStream;
+  } catch(e){toast('No se pudo cambiar cámara');}
+}
+
+function toggleCameraRecord(){
+  if(!camRecording) startCamRecord();
+  else stopCamRecord();
+}
+
+function startCamRecord(){
+  camRecording=true;camSeconds=0;
+  document.getElementById('camRecordBtn').classList.add('recording');
+  document.getElementById('recBtn').classList.add('recording');
+  document.getElementById('camTimerDisplay').classList.add('visible');
+  document.getElementById('camHint').textContent='Grabando... tocá para detener';
+
+  // Try MediaRecorder if available
+  try{
+    const chunks=[];
+    camRecorder=new MediaRecorder(camStream);
+    camRecorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    camRecorder.onstop=()=>{
+      const blob=new Blob(chunks,{type:'video/webm'});
+      onRecordingComplete(blob);
+    };
+    camRecorder.start();
+  } catch(e){camRecorder=null;}
+
+  camTimer=setInterval(()=>{
+    camSeconds++;
+    const pct=(camSeconds/10)*100;
+    document.getElementById('camProgressBar').style.width=pct+'%';
+    document.getElementById('camTimerDisplay').textContent='0:'+String(camSeconds).padStart(2,'0');
+    if(camSeconds>=10) stopCamRecord();
+  },1000);
+}
+
+function stopCamRecord(){
+  if(!camRecording)return;
+  camRecording=false;
+  clearInterval(camTimer);
+  document.getElementById('camRecordBtn').classList.remove('recording');
+  document.getElementById('recBtn').classList.remove('recording');
+  if(camRecorder&&camRecorder.state!=='inactive') camRecorder.stop();
+  else onRecordingComplete(null);
+}
+
+function onRecordingComplete(blob){
+  closeCamera();
+  setTimeout(()=>{
+    notif('📍 Pulse publicado · 0m de distancia');
+  },400);
+}
+
+/* ══════════════════════════════════════════
+   FEED
+══════════════════════════════════════════ */
+function fmtN(n){return n>=1000?(n/1000).toFixed(1)+'K':n}
+
+function buildFeed(){
+  const c=document.getElementById('feedContainer');c.innerHTML='';
+  let posts=curTab==='nearby'?POSTS_NEARBY:Object.values(POSTS_FOLLOWING_DATA).filter(p=>followed.has(p.userId));
+  if(!posts.length){
+    c.innerHTML=`<div class="empty-feed"><div class="empty-feed-icon">${curTab==='following'?'💜':'📍'}</div><div class="empty-feed-title">${curTab==='following'?'No seguís a nadie aún':'Sin posts cercanos'}</div><div class="empty-feed-sub">${curTab==='following'?'Seguí personas para ver sus Pulses acá.':'¡Sé el primero en publicar!'}</div>${curTab==='following'?'<button class="empty-feed-btn" onclick="go(\'search\')">🔍 Explorar personas</button>':''}</div>`;
+    return;
+  }
+  posts.forEach(p=>{
+    const el=document.createElement('div');el.className='post';el.style.height='calc(100vh - 0px)';
+    el.innerHTML=`<div class="post-bg" style="background:${p.bg}"><div class="post-emoji-big">${p.emoji}</div></div>
+    <div class="post-tg"></div><div class="post-bg2"></div>
+    <div class="post-info">
+      <div class="post-user-row">
+        <div class="avatar" style="background:${p.avc}">${p.av}</div>
+        ${p.star?'<div class="star-badge">★</div>':''}
+        <div><div class="post-uname">${p.name} <span style="color:var(--muted);font-size:12px;font-weight:400">${p.user}</span></div><div class="post-dist">📍 ${p.dist}</div></div>
+      </div>
+      <div class="post-cap">${p.caption}</div>
+      <div class="post-tag ${p.nearby?'tag-nb':'tag-fl'}">${p.nearby?'📍 Cercano':'💜 Siguiendo'}</div>
+    </div>
+    <div class="post-actions">
+      <div class="act ${liked[p.id]?'liked':''}" id="like-${p.id}" onclick="toggleLike(${p.id})">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span id="lc-${p.id}">${fmtN(p.likes)}</span>
+      </div>
+      <div class="act" onclick="toast('💬 ${p.comments} comentarios')">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>${p.comments}</span>
+      </div>
+      <div class="act" onclick="toast('🔗 Enlace copiado')">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span>${p.shares}</span>
+      </div>
+    </div>`;
+    c.appendChild(el);
+  });
+}
+
+function toggleLike(id){
+  liked[id]=!liked[id];
+  document.getElementById('like-'+id)?.classList.toggle('liked',liked[id]);
+  const allP=[...POSTS_NEARBY,...Object.values(POSTS_FOLLOWING_DATA)];
+  const p=allP.find(x=>x.id===id);
+  if(p)document.getElementById('lc-'+id).textContent=fmtN(p.likes+(liked[id]?1:0));
+}
+
+function setTab(t){
+  curTab=t;
+  document.getElementById('tab-nb').classList.toggle('active',t==='nearby');
+  document.getElementById('tab-fl').classList.toggle('active',t==='following');
+  buildFeed();
+}
+
+/* ══════════════════════════════════════════
+   SEARCH
+══════════════════════════════════════════ */
+function makeUserCard(u){
+  const div=document.createElement('div');div.className='user-card';
+  const isF=followed.has(u.id);
+  div.innerHTML=`<div class="user-card-av" style="background:${u.avc}">${u.av}${u.star?'<div class="star-pip">★</div>':''}</div>
+    <div class="user-card-info">
+      <div class="user-card-name">${u.name}${u.star?'<div class="verified-pip">✓</div>':''}</div>
+      <div class="user-card-handle">${u.handle}</div>
+      <div class="user-card-meta">📍 ${u.dist} · ${u.followers} seguidores</div>
+    </div>
+    <button class="user-card-follow ${isF?'following':''}" id="fc-${u.id}" onclick="event.stopPropagation();toggleFollow(${u.id})">${isF?'Siguiendo':'Seguir'}</button>`;
+  div.onclick=()=>openProfileOverlay(u);
+  return div;
+}
+
+function buildSuggested(){
+  const list=document.getElementById('suggestedList');list.innerHTML='';
+  ALL_USERS.slice(0,4).forEach((u,i)=>{
+    list.appendChild(makeUserCard(u));
+    if(i<3)list.appendChild(Object.assign(document.createElement('div'),{className:'s-divider'}));
+  });
+}
+
+function toggleFollow(uid){
+  const wasF=followed.has(uid);
+  if(wasF)followed.delete(uid);else followed.add(uid);
+  const isF=followed.has(uid);
+  document.querySelectorAll('#fc-'+uid).forEach(btn=>{btn.textContent=isF?'Siguiendo':'Seguir';btn.classList.toggle('following',isF);});
+  const ovBtn=document.getElementById('ov-follow-btn');
+  if(ovBtn&&curOvUser&&curOvUser.id===uid){ovBtn.textContent=isF?'✓ Siguiendo':'+ Seguir';ovBtn.className='ov-btn-f '+(isF?'is-following':'not-following');}
+  const u=ALL_USERS.find(x=>x.id===uid);
+  if(isF){notif('💚 Ahora seguís a '+(u?u.name:''));if(curTab==='following')buildFeed();}
+  else{toast('✋ Dejaste de seguir');if(curTab==='following')buildFeed();}
+}
+
+const searchInput=document.getElementById('searchInput');
+const clearBtnEl=document.getElementById('clearBtn');
+searchInput.addEventListener('input',()=>{
+  const q=searchInput.value.trim();
+  clearBtnEl.style.display=q?'block':'none';
+  q?doSearch(q):showDefault();
+});
+
+function doSearch(q){
+  document.getElementById('searchDefault').style.display='none';
+  const res=document.getElementById('searchResults');res.style.display='block';res.innerHTML='';
+  const ql=q.toLowerCase();
+  const hits=ALL_USERS.filter(u=>u.name.toLowerCase().includes(ql)||u.handle.toLowerCase().includes(ql)||(u.bio&&u.bio.toLowerCase().includes(ql))||u.tags.some(t=>t.toLowerCase().includes(ql)));
+  if(!hits.length){res.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados para "<strong>${q}</strong>"</div></div>`;return;}
+  const lbl=document.createElement('div');lbl.className='search-section-lbl';lbl.textContent=hits.length+' resultado'+(hits.length>1?'s':'');res.appendChild(lbl);
+  hits.forEach((u,i)=>{res.appendChild(makeUserCard(u));if(i<hits.length-1)res.appendChild(Object.assign(document.createElement('div'),{className:'s-divider'}));});
+}
+
+function searchFor(q){searchInput.value=q;clearBtnEl.style.display='block';doSearch(q);searchInput.focus();}
+function showDefault(){document.getElementById('searchDefault').style.display='block';document.getElementById('searchResults').style.display='none';}
+function clearSearch(){searchInput.value='';clearBtnEl.style.display='none';showDefault();searchInput.focus();}
+
+/* ══════════════════════════════════════════
+   OTHER PROFILE OVERLAY
+══════════════════════════════════════════ */
+function openProfileOverlay(u){
+  curOvUser=u;const isF=followed.has(u.id);
+  document.getElementById('overlayContent').innerHTML=`
+    <div class="ov-hero"><div style="position:absolute;inset:0;background:radial-gradient(ellipse at 40% 0%,${u.star?'rgba(0,255,135,0.1)':'rgba(0,212,255,0.07)'} 0%,transparent 70%);pointer-events:none"></div>
+      <div class="ov-av" style="background:${u.avc}">${u.av}${u.star?'<div class="ov-crown">⭐</div>':''}</div>
+      <div class="ov-name-row"><div class="ov-name">${u.name}</div>${u.star?'<div class="ov-verified">✓</div><div class="ov-star-badge">ESTRELLA</div>':''}</div>
+      <div class="ov-handle">${u.handle} · 📍 ${u.dist}</div>
+    </div>
+    <div class="ov-bio">${u.bio||''}</div>
+    <div class="ov-tags">${u.tags.map(t=>`<div class="ov-tag">${t}</div>`).join('')}</div>
+    <div class="ov-stats">
+      <div class="ov-stat"><div class="ov-stat-num">${u.pulses}</div><div class="ov-stat-lbl">Pulses</div></div>
+      <div class="ov-stat"><div class="ov-stat-num">${u.followers}</div><div class="ov-stat-lbl">Seguidores</div></div>
+      <div class="ov-stat"><div class="ov-stat-num">${u.views}</div><div class="ov-stat-lbl">Views</div></div>
+    </div>
+    <div class="ov-btns">
+      <button class="ov-btn-f ${isF?'is-following':'not-following'}" id="ov-follow-btn" onclick="toggleFollow(${u.id})">${isF?'✓ Siguiendo':'+ Seguir'}</button>
+      <button class="ov-btn-msg" onclick="openChatFromProfile(${u.id})">💬 Mensaje</button>
+    </div>
+    <div class="ov-grid-lbl">📍 Pulses de ${u.name.split(' ')[0]}</div>
+    <div class="ov-grid">${u.emojis.map((em,i)=>`<div class="ov-gi" onclick="toast('▶ Reproduciendo...')"><div class="ov-gi-in" style="background:linear-gradient(135deg,hsl(${i*30},55%,10%),hsl(${i*30+40},45%,16%))">${em}</div><div class="ov-gi-views">▶ ${u.vl[i]||'--'}</div></div>`).join('')}</div>`;
+  document.getElementById('profileOverlay').classList.add('open');
+}
+function closeProfileOverlay(){document.getElementById('profileOverlay').classList.remove('open');curOvUser=null;}
+
+/* ══════════════════════════════════════════
+   MESSAGES / CHAT
+══════════════════════════════════════════ */
+function openMessages(){
+  document.getElementById('msgBadge').style.display='none';
+  buildDMList();
+  document.getElementById('messagesOverlay').classList.add('open');
+}
+function closeMessages(){document.getElementById('messagesOverlay').classList.remove('open');}
+
+function buildDMList(){
+  const list=document.getElementById('dmList');list.innerHTML='';
+  if(!DMS.length){list.innerHTML=`<div class="dm-empty"><div class="dm-empty-icon">💬</div><div class="dm-empty-text">No tenés mensajes aún.</div></div>`;return;}
+  DMS.forEach((dm,i)=>{
+    const u=ALL_USERS.find(x=>x.id===dm.userId);if(!u)return;
+    const div=document.createElement('div');div.className='dm-item';
+    div.innerHTML=`<div class="dm-item-av" style="background:${u.avc}">${u.av}${dm.online?'<div class="dm-online-dot"></div>':''}</div>
+      <div class="dm-item-info"><div class="dm-item-name">${u.name}</div><div class="dm-item-preview ${dm.unread?'unread':''}">${dm.unread?'<span style="color:var(--pulse)">●</span> ':''}${dm.preview}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div class="dm-item-time">${dm.time}</div>${dm.unread?`<div class="dm-unread-badge">${dm.unread}</div>`:''}</div>`;
+    div.onclick=()=>{dm.unread=0;openChat(u,dm);};
+    list.appendChild(div);
+    if(i<DMS.length-1)list.appendChild(Object.assign(document.createElement('div'),{className:'dm-divider'}));
+  });
+}
+
+function openChat(u,dm){
+  curChatUser=u;
+  document.getElementById('chatAv').style.background=u.avc;
+  document.getElementById('chatAv').textContent=u.av;
+  document.getElementById('chatName').textContent=u.name;
+  document.getElementById('chatStatus').textContent=dm&&dm.online?'● En línea':'○ Visto recientemente';
+  document.getElementById('chatStatus').style.color=dm&&dm.online?'var(--pulse)':'var(--muted)';
+  renderChat(u.id);
+  document.getElementById('chatOverlay').classList.add('open');
+  setTimeout(scrollChatBottom,80);
+}
+
+function openChatFromProfile(userId){
+  const u=ALL_USERS.find(x=>x.id===userId);if(!u)return;
+  let dm=DMS.find(x=>x.userId===userId);
+  if(!dm){dm={userId,preview:'Iniciaste una conversación',time:'Ahora',unread:0,online:true};DMS.unshift(dm);}
+  if(!CONVOS[userId])CONVOS[userId]=[];
+  closeProfileOverlay();
+  setTimeout(()=>{openMessages();setTimeout(()=>openChat(u,dm),150);},250);
+}
+
+function renderChat(uid){
+  const body=document.getElementById('chatBody');body.innerHTML='';
+  const msgs=CONVOS[uid]||[];
+  const u=ALL_USERS.find(x=>x.id===uid);
+  if(msgs.length){const sep=document.createElement('div');sep.className='chat-date-sep';sep.textContent='— Conversación —';body.appendChild(sep);}
+  msgs.forEach(m=>{
+    const row=document.createElement('div');row.className='msg-row'+(m.mine?' mine':'');
+    if(!m.mine){const av=document.createElement('div');av.className='msg-av-small';av.style.background=u.avc;av.textContent=u.av;row.appendChild(av);}
+    const bubble=document.createElement('div');bubble.className='msg-bubble '+(m.mine?'mine':'theirs');bubble.textContent=m.text;
+    const time=document.createElement('div');time.className='msg-time';time.textContent=m.time;
+    if(m.mine){row.appendChild(time);row.appendChild(bubble);}else{row.appendChild(bubble);row.appendChild(time);}
+    body.appendChild(row);
+  });
+  if(!msgs.length)body.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100%;color:var(--muted);text-align:center;padding:40px"><div style="font-size:40px;opacity:0.3">💬</div><div style="font-size:14px;line-height:1.5">Empezá la conversación<br>con ${u?u.name:''}</div></div>`;
+}
+
+function sendMessage(){
+  const input=document.getElementById('chatInput');const text=input.value.trim();
+  if(!text||!curChatUser)return;
+  const uid=curChatUser.id;
+  if(!CONVOS[uid])CONVOS[uid]=[];
+  const now=new Date();const ts=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  CONVOS[uid].push({mine:true,text,time:ts});
+  const dm=DMS.find(x=>x.userId===uid);if(dm){dm.preview=text;dm.time='Ahora';}
+  input.value='';input.style.height='auto';renderChat(uid);scrollChatBottom();
+  setTimeout(()=>{
+    const replies=['😍','👏 ¡Me encanta!','Sí!! 🙌','Jaja exacto','¿En serio? Qué bueno 🔥','Dale, te escribo! 📱','❤️','Re de acuerdo','🤩🤩'];
+    const reply=replies[Math.floor(Math.random()*replies.length)];
+    const ts2=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');
+    CONVOS[uid].push({mine:false,text:reply,time:ts2});
+    const dm2=DMS.find(x=>x.userId===uid);if(dm2){dm2.preview=reply;dm2.time='Ahora';}
+    if(curChatUser&&curChatUser.id===uid){renderChat(uid);scrollChatBottom();}
+  },1400);
+}
+
+function scrollChatBottom(){const b=document.getElementById('chatBody');b.scrollTop=b.scrollHeight;}
+function closeChat(){document.getElementById('chatOverlay').classList.remove('open');curChatUser=null;}
+function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+/* ══════════════════════════════════════════
+   MAP
+══════════════════════════════════════════ */
+function buildMap(){
+  const cv=document.getElementById('heatCanvas');
+  const W=window.innerWidth,H=window.innerHeight-68;
+  cv.width=W;cv.height=H;cv.style.width=W+'px';cv.style.height=H+'px';
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#070b0c';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,255,135,0.035)';ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=28){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,255,255,0.045)';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(0,H*.35);ctx.quadraticCurveTo(W*.45,H*.28,W,H*.38);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(0,H*.62);ctx.lineTo(W,H*.68);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*.28,0);ctx.lineTo(W*.22,H);ctx.stroke();
+  [{x:.42,y:.46,r:.22,a:.85,c:'255,0,110'},{x:.68,y:.32,r:.14,a:.65,c:'255,80,0'},{x:.18,y:.64,r:.12,a:.5,c:'255,140,0'},{x:.78,y:.62,r:.1,a:.38,c:'0,212,255'}].forEach(h=>{
+    const cx=h.x*W,cy=h.y*H,r=h.r*Math.min(W,H);
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,`rgba(${h.c},${h.a})`);g.addColorStop(.5,`rgba(${h.c},${h.a*.3})`);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  });
+  [{x:.42,y:.46,c:'#ff006e',r:7},{x:.68,y:.32,c:'#ff8c00',r:5},{x:.18,y:.64,c:'#ff8c00',r:5},{x:.78,y:.62,c:'#00d4ff',r:4},{x:.5,y:.56,c:'#00ff87',r:9}].forEach(p=>{
+    const x=p.x*W,y=p.y*H,hex=p.c.replace('#','');
+    const ri=parseInt(hex.slice(0,2),16),gi=parseInt(hex.slice(2,4),16),bi=parseInt(hex.slice(4,6),16);
+    ctx.beginPath();ctx.arc(x,y,p.r*2.5,0,Math.PI*2);ctx.fillStyle=`rgba(${ri},${gi},${bi},0.15)`;ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,p.r/1.5,0,Math.PI*2);ctx.fillStyle=p.c;ctx.fill();ctx.strokeStyle='#070b0c';ctx.lineWidth=2;ctx.stroke();
+  });
+  ctx.font='bold 11px "Space Mono",monospace';ctx.fillStyle='rgba(0,255,135,0.95)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('TÚ',.5*W,.56*H-18);
+  countUp('onlineCount',0,247,1300);countUp('nearbyCount',0,18,700);
+  setInterval(()=>{const el=document.getElementById('onlineCount');if(el)el.textContent=Math.max(240,parseInt(el.textContent||247)+(Math.random()>.5?1:-1));},2800);
+}
+
+function countUp(id,from,to,dur){
+  const el=document.getElementById(id);if(!el)return;
+  const s=Date.now();
+  const tick=()=>{const p=Math.min(1,(Date.now()-s)/dur);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick);};
+  tick();
+}
+
+function buildProfileGrid(){
+  const g=document.getElementById('profileGrid');
+  GRID_E.forEach((em,i)=>{
+    const d=document.createElement('div');d.className='pgitem';
+    d.innerHTML=`<div class="pgitem-in" style="background:linear-gradient(135deg,hsl(${i*30},55%,11%),hsl(${i*30+50},45%,16%))">${em}</div><div class="pgviews">▶ ${GRID_V[i]}</div>`;
+    d.onclick=()=>toast('▶ Reproduciendo Pulse...');
+    g.appendChild(d);
+  });
+}
+
+/* ══════════════════════════════════════════
+   NAV
+══════════════════════════════════════════ */
+function go(s){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById(s+'-screen').classList.add('active');
+  const nb=document.getElementById('nav-'+s);if(nb)nb.classList.add('active');
+  if(s==='map')setTimeout(buildMap,70);
+  if(s==='search'){buildSuggested();setTimeout(()=>searchInput.focus(),300);}
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCamera();closeChat();closeMessages();closeProfileOverlay();closeEditProfile();closeSettings();}});
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+let toastTm,notifTm;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTm);toastTm=setTimeout(()=>el.classList.remove('show'),2200);}
+function notif(msg){const el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');clearTimeout(notifTm);notifTm=setTimeout(()=>el.classList.remove('show'),3000);}
+
+/* ══════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════ */
+const settingsState={private:false,location:true,notifs:true,nearby:true};
+const dmsOptions=['Todos','Solo seguidores','Nadie'];
+let dmsIndex=0;
+
+function openSettings(){
+  // update email sub
+  const emailSub=document.getElementById('settingsEmailSub');
+  if(emailSub) emailSub.textContent=document.getElementById('logEmail')?.value||document.getElementById('regEmail')?.value||'tu@email.com';
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open');}
+
+function toggleSetting(key){
+  settingsState[key]=!settingsState[key];
+  const map={private:'togglePrivate',location:'toggleLocation',notifs:'toggleNotifs',nearby:'toggleNearby'};
+  const el=document.getElementById(map[key]);
+  if(el) el.classList.toggle('active',settingsState[key]);
+  const labels={private:'Cuenta privada',location:'Mostrar ubicación',notifs:'Notificaciones push',nearby:'Actividad cercana'};
+  toast((settingsState[key]?'✅ ':'❌ ')+labels[key]+' '+(settingsState[key]?'activado':'desactivado'));
+}
+
+function cycleDMs(){
+  dmsIndex=(dmsIndex+1)%dmsOptions.length;
+  const el=document.getElementById('dmsSetting');
+  if(el) el.textContent=dmsOptions[dmsIndex];
+  toast('💬 Mensajes directos: '+dmsOptions[dmsIndex]);
+}
+
+/* ══════════════════════════════════════════
+   SHARE PROFILE
+══════════════════════════════════════════ */
+function shareProfile(){
+  const handle=myProfile.handle||'@usuario';
+  const name=myProfile.name||'Usuario';
+  const shareData={title:'Pulse — '+name,text:'Seguime en Pulse! '+handle+' · '+myProfile.location,url:'https://pulse.app/'+handle.replace('@','')};
+  if(navigator.share){
+    navigator.share(shareData).catch(()=>{});
+  } else {
+    // fallback: copy to clipboard
+    const text=shareData.text+'\n'+shareData.url;
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(text).then(()=>notif('🔗 Enlace copiado al portapapeles'));
+    } else {
+      const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+      notif('🔗 Enlace copiado al portapapeles');
+    }
+  }
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+buildFeed();
+buildProfileGrid();
+buildSuggested();
+</script>
+</body>
+</html>
