@@ -8,6 +8,9 @@
 <meta name="theme-color" content="#080808">
 <title>Pulse</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 :root{
@@ -53,7 +56,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* ══════════════════════════════════════════
    NAV
 ══════════════════════════════════════════ */
-.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:8px 0 max(10px,env(safe-area-inset-bottom));background:rgba(8,8,8,0.97);border-top:1px solid var(--dim);display:flex;align-items:center;justify-content:space-around;backdrop-filter:blur(20px)}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:6px 0 max(10px,env(safe-area-inset-bottom));background:rgba(8,8,8,0.97);border-top:1px solid var(--dim);display:grid;grid-template-columns:1fr 1fr 60px 1fr 1fr;align-items:center;justify-items:center;backdrop-filter:blur(20px)}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;transition:transform 0.15s;user-select:none}
 .nav-btn:active{transform:scale(0.88)}
 .nav-btn svg{width:22px;height:22px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.22s}
@@ -63,12 +66,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .nav-lbl{font-size:9px;color:var(--muted);transition:color 0.22s;font-weight:500;text-transform:uppercase;letter-spacing:0.07em}
 .nav-btn.active .nav-lbl{color:var(--pulse)}
 
-/* REC BUTTON — plain red circle */
-.rec-wrap{display:flex;align-items:center;justify-content:center}
-.rec-outer{width:52px;height:52px;border-radius:50%;background:#e00;border:3px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;margin-top:-14px;transition:transform 0.15s,background 0.2s;box-shadow:0 0 18px rgba(220,0,0,0.4)}
+/* REC BUTTON — plain red circle, perfectly centered */
+.rec-wrap{display:flex;align-items:center;justify-content:center;width:60px}
+.rec-outer{width:50px;height:50px;border-radius:50%;background:#e00;border:3px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;margin-top:-18px;transition:transform 0.15s,background 0.2s;box-shadow:0 0 16px rgba(220,0,0,0.45);flex-shrink:0}
 .rec-outer:active{transform:scale(0.92)}
-.rec-outer.recording{background:#ff3333;box-shadow:0 0 24px rgba(255,0,0,0.6);animation:recPulse 1s ease-in-out infinite}
-@keyframes recPulse{0%,100%{box-shadow:0 0 18px rgba(255,0,0,0.5)}50%{box-shadow:0 0 30px rgba(255,0,0,0.8)}}
+.rec-outer.recording{background:#ff3333;box-shadow:0 0 24px rgba(255,0,0,0.7);animation:recPulse 1s ease-in-out infinite}
+@keyframes recPulse{0%,100%{box-shadow:0 0 16px rgba(255,0,0,0.5)}50%{box-shadow:0 0 30px rgba(255,0,0,0.85)}}
 .rec-inner-sq{width:14px;height:14px;border-radius:3px;background:#fff;opacity:0;transition:opacity 0.15s}
 .rec-outer.recording .rec-inner-sq{opacity:1}
 
@@ -96,7 +99,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .post-emoji-big{font-size:min(130px,28vw);opacity:0.14;pointer-events:none}
 .post-tg{position:absolute;top:0;left:0;right:0;height:210px;background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent)}
 .post-bg2{position:absolute;bottom:0;left:0;right:0;height:290px;background:linear-gradient(to top,rgba(0,0,0,0.88),transparent)}
-.post-info{position:absolute;bottom:22px;left:16px;right:68px}
+.post-info{position:absolute;bottom:calc(var(--nav) + 16px);left:16px;right:72px}
 .post-user-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
 .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;flex-shrink:0;position:relative;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -109,7 +112,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .post-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:11px;font-weight:500}
 .tag-nb{background:rgba(0,212,255,0.1);color:var(--pulse2);border:1px solid rgba(0,212,255,0.2)}
 .tag-fl{background:rgba(255,0,110,0.1);color:#ff6ea8;border:1px solid rgba(255,0,110,0.2)}
-.post-actions{position:absolute;bottom:22px;right:10px;display:flex;flex-direction:column;gap:20px;align-items:center}
+.post-actions{position:absolute;bottom:calc(var(--nav) + 16px);right:10px;display:flex;flex-direction:column;gap:18px;align-items:center}
 .act{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;user-select:none}
 .act svg{width:27px;height:27px;stroke:rgba(255,255,255,0.9);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.18s;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6))}
 .act.liked svg{stroke:var(--pulse3);fill:var(--pulse3)}
@@ -268,17 +271,19 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* ══════════════════════════════════════════
    MAP
 ══════════════════════════════════════════ */
-#map-screen{background:#070b0c}
-.map-header{position:absolute;top:0;left:0;right:0;z-index:10;padding:max(46px,env(safe-area-inset-top)) 20px 14px;background:linear-gradient(to bottom,rgba(7,11,12,1) 65%,transparent)}
+#map-screen{background:#0d1117}
+.map-header{position:absolute;top:0;left:0;right:0;z-index:20;padding:max(46px,env(safe-area-inset-top)) 20px 14px;background:linear-gradient(to bottom,rgba(7,11,12,0.95) 60%,transparent);pointer-events:none}
 .map-title{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:-0.02em}
 .map-sub{font-size:12px;color:var(--muted);margin-top:3px}
 .map-loc-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,135,0.08);border:1px solid rgba(0,255,135,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--pulse);font-family:var(--mono);margin-top:8px}
-canvas{display:block;width:100%;height:100%}
-.map-stats{position:absolute;top:135px;right:16px;display:flex;flex-direction:column;gap:10px}
+#leafletMap{position:absolute;inset:0;z-index:1}
+.leaflet-container{background:#0d1117!important}
+.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+.map-stats{position:absolute;top:145px;right:16px;display:flex;flex-direction:column;gap:10px;z-index:20;pointer-events:none}
 .mstat{background:rgba(7,11,12,0.88);border:1px solid var(--dim);border-radius:12px;padding:11px 13px;backdrop-filter:blur(12px);min-width:74px}
 .mstat-num{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--pulse)}
 .mstat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.07em}
-.map-legend{position:absolute;bottom:20px;left:16px;background:rgba(7,11,12,0.9);border:1px solid var(--dim);border-radius:13px;padding:12px 15px;backdrop-filter:blur(16px)}
+.map-legend{position:absolute;bottom:20px;left:16px;background:rgba(7,11,12,0.9);border:1px solid var(--dim);border-radius:13px;padding:12px 15px;backdrop-filter:blur(16px);z-index:20;pointer-events:none}
 .leg-item{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:6px}
 .leg-item:last-child{margin-bottom:0}
 .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -517,12 +522,12 @@ input[type=file]{display:none}
     <div class="map-sub">Actividad en tiempo real</div>
     <div class="map-loc-badge" id="mapLocBadge">📍 Obteniendo ubicación...</div>
   </div>
-  <canvas id="heatCanvas"></canvas>
-  <div class="map-stats">
+  <div id="leafletMap" style="position:absolute;inset:0;top:0;bottom:0;left:0;right:0;z-index:1"></div>
+  <div class="map-stats" style="z-index:10">
     <div class="mstat"><div class="mstat-num" id="onlineCount">247</div><div class="mstat-lbl">Online</div></div>
     <div class="mstat"><div class="mstat-num" id="nearbyCount">18</div><div class="mstat-lbl">Cercanos</div></div>
   </div>
-  <div class="map-legend">
+  <div class="map-legend" style="z-index:10">
     <div class="leg-item"><div class="leg-dot" style="background:#ff006e"></div>Alta actividad</div>
     <div class="leg-item"><div class="leg-dot" style="background:#ff8c00"></div>Media actividad</div>
     <div class="leg-item"><div class="leg-dot" style="background:#00d4ff"></div>Poca actividad</div>
@@ -1068,6 +1073,7 @@ function startGPS(){
 function handleGPSSuccess(pos){
   const lat=pos.coords.latitude.toFixed(4);
   const lng=pos.coords.longitude.toFixed(4);
+  updateMapLocation(parseFloat(lat),parseFloat(lng));
   reverseGeocode(lat,lng);
 }
 
@@ -1524,38 +1530,123 @@ function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();se
 function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
 
 /* ══════════════════════════════════════════
-   MAP
+   MAP — Leaflet real map
 ══════════════════════════════════════════ */
+let leafletMap=null;
+let heatLayer=null;
+let userMarker=null;
+let mapInitialized=false;
+
 function buildMap(){
-  const cv=document.getElementById('heatCanvas');
-  const W=window.innerWidth,H=window.innerHeight-68;
-  cv.width=W;cv.height=H;cv.style.width=W+'px';cv.style.height=H+'px';
-  const ctx=cv.getContext('2d');
-  ctx.fillStyle='#070b0c';ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='rgba(0,255,135,0.035)';ctx.lineWidth=0.5;
-  for(let x=0;x<W;x+=28){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
-  for(let y=0;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
-  ctx.strokeStyle='rgba(255,255,255,0.045)';ctx.lineWidth=7;
-  ctx.beginPath();ctx.moveTo(0,H*.35);ctx.quadraticCurveTo(W*.45,H*.28,W,H*.38);ctx.stroke();
-  ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=4;
-  ctx.beginPath();ctx.moveTo(0,H*.62);ctx.lineTo(W,H*.68);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(W*.28,0);ctx.lineTo(W*.22,H);ctx.stroke();
-  [{x:.42,y:.46,r:.22,a:.85,c:'255,0,110'},{x:.68,y:.32,r:.14,a:.65,c:'255,80,0'},{x:.18,y:.64,r:.12,a:.5,c:'255,140,0'},{x:.78,y:.62,r:.1,a:.38,c:'0,212,255'}].forEach(h=>{
-    const cx=h.x*W,cy=h.y*H,r=h.r*Math.min(W,H);
-    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-    g.addColorStop(0,`rgba(${h.c},${h.a})`);g.addColorStop(.5,`rgba(${h.c},${h.a*.3})`);g.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  if(mapInitialized){
+    setTimeout(()=>leafletMap&&leafletMap.invalidateSize(),100);
+    return;
+  }
+  mapInitialized=true;
+
+  // Default center: Merlo, BsAs
+  const defaultLat=-34.6588, defaultLng=-58.7278;
+  const centerLat = (myProfile&&myProfile._lat)||defaultLat;
+  const centerLng = (myProfile&&myProfile._lng)||defaultLng;
+
+  leafletMap=L.map('leafletMap',{
+    center:[centerLat,centerLng],
+    zoom:15,
+    zoomControl:false,
+    attributionControl:false
   });
-  [{x:.42,y:.46,c:'#ff006e',r:7},{x:.68,y:.32,c:'#ff8c00',r:5},{x:.18,y:.64,c:'#ff8c00',r:5},{x:.78,y:.62,c:'#00d4ff',r:4},{x:.5,y:.56,c:'#00ff87',r:9}].forEach(p=>{
-    const x=p.x*W,y=p.y*H,hex=p.c.replace('#','');
-    const ri=parseInt(hex.slice(0,2),16),gi=parseInt(hex.slice(2,4),16),bi=parseInt(hex.slice(4,6),16);
-    ctx.beginPath();ctx.arc(x,y,p.r*2.5,0,Math.PI*2);ctx.fillStyle=`rgba(${ri},${gi},${bi},0.15)`;ctx.fill();
-    ctx.beginPath();ctx.arc(x,y,p.r/1.5,0,Math.PI*2);ctx.fillStyle=p.c;ctx.fill();ctx.strokeStyle='#070b0c';ctx.lineWidth=2;ctx.stroke();
+
+  // Dark tile layer (CartoDB Dark Matter — free, no API key needed)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    maxZoom:19,
+    subdomains:'abcd'
+  }).addTo(leafletMap);
+
+  // Generate heat points around user location
+  const heatPoints=generateHeatPoints(centerLat,centerLng);
+  heatLayer=L.heatLayer(heatPoints,{
+    radius:35,
+    blur:25,
+    maxZoom:17,
+    gradient:{0.2:'#00d4ff',0.45:'#ff8c00',0.7:'#ff006e',1.0:'#ff006e'}
+  }).addTo(leafletMap);
+
+  // User location marker
+  const youIcon=L.divIcon({
+    html:`<div style="width:16px;height:16px;border-radius:50%;background:#00ff87;border:3px solid #000;box-shadow:0 0 12px rgba(0,255,135,0.8)"></div>`,
+    className:'',iconSize:[16,16],iconAnchor:[8,8]
   });
-  ctx.font='bold 11px "Space Mono",monospace';ctx.fillStyle='rgba(0,255,135,0.95)';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('TÚ',.5*W,.56*H-18);
-  countUp('onlineCount',0,247,1300);countUp('nearbyCount',0,18,700);
-  setInterval(()=>{const el=document.getElementById('onlineCount');if(el)el.textContent=Math.max(240,parseInt(el.textContent||247)+(Math.random()>.5?1:-1));},2800);
+  userMarker=L.marker([centerLat,centerLng],{icon:youIcon}).addTo(leafletMap);
+  userMarker.bindPopup('<b style="font-family:monospace;color:#00ff87">TÚ</b>',{closeButton:false}).openPopup();
+
+  // Add pulse markers for nearby activity
+  addActivityMarkers(centerLat,centerLng);
+
+  countUp('onlineCount',0,247,1300);
+  countUp('nearbyCount',0,18,700);
+  setInterval(()=>{
+    const el=document.getElementById('onlineCount');
+    if(el)el.textContent=Math.max(240,parseInt(el.textContent||247)+(Math.random()>.5?1:-1));
+  },2800);
+
+  // Update map if GPS comes in later
+  setTimeout(()=>leafletMap.invalidateSize(),300);
+}
+
+function generateHeatPoints(lat,lng){
+  const points=[];
+  // Dense cluster near user (high activity)
+  for(let i=0;i<80;i++){
+    points.push([lat+(Math.random()-0.5)*0.008, lng+(Math.random()-0.5)*0.012, Math.random()*0.9+0.4]);
+  }
+  // Medium clusters nearby
+  const clusters=[
+    [lat+0.012, lng+0.018],[lat-0.015, lng+0.008],
+    [lat+0.008, lng-0.022],[lat-0.02, lng-0.01]
+  ];
+  clusters.forEach(([clat,clng])=>{
+    for(let i=0;i<25;i++){
+      points.push([clat+(Math.random()-0.5)*0.006, clng+(Math.random()-0.5)*0.006, Math.random()*0.5+0.2]);
+    }
+  });
+  // Sparse scattered points
+  for(let i=0;i<30;i++){
+    points.push([lat+(Math.random()-0.5)*0.04, lng+(Math.random()-0.5)*0.05, Math.random()*0.25+0.05]);
+  }
+  return points;
+}
+
+function addActivityMarkers(lat,lng){
+  const activities=[
+    {dlat:0.003,dlng:0.004,user:'@lucasg',color:'#00ff87',text:'📸 Foto nueva'},
+    {dlat:-0.005,dlng:0.007,user:'@sof_dance',color:'#ff006e',text:'💃 Ensayo'},
+    {dlat:0.008,dlng:-0.003,user:'@fedej',color:'#ffaa00',text:'🛹 Skate'},
+    {dlat:-0.004,dlng:-0.009,user:'@tomast',color:'#00d4ff',text:'🌌 Cielo'},
+    {dlat:0.006,dlng:0.011,user:'@ramio',color:'#00ff87',text:'🍕 Comida'},
+  ];
+  activities.forEach(a=>{
+    const icon=L.divIcon({
+      html:`<div style="width:10px;height:10px;border-radius:50%;background:${a.color};border:2px solid #000;box-shadow:0 0 8px ${a.color}88"></div>`,
+      className:'',iconSize:[10,10],iconAnchor:[5,5]
+    });
+    L.marker([lat+a.dlat,lng+a.dlng],{icon}).addTo(leafletMap)
+      .bindPopup(`<div style="font-family:monospace;font-size:12px;color:${a.color}">${a.user}</div><div style="font-size:11px;margin-top:2px">${a.text}</div>`,{closeButton:false});
+  });
+}
+
+// Called when GPS resolves — updates map center
+function updateMapLocation(lat,lng){
+  if(!myProfile) myProfile={};
+  myProfile._lat=lat;myProfile._lng=lng;
+  if(leafletMap){
+    leafletMap.setView([lat,lng],15);
+    if(userMarker) userMarker.setLatLng([lat,lng]);
+    if(heatLayer){leafletMap.removeLayer(heatLayer);}
+    heatLayer=L.heatLayer(generateHeatPoints(lat,lng),{
+      radius:35,blur:25,maxZoom:17,
+      gradient:{0.2:'#00d4ff',0.45:'#ff8c00',0.7:'#ff006e',1.0:'#ff006e'}
+    }).addTo(leafletMap);
+  }
 }
 
 function countUp(id,from,to,dur){
