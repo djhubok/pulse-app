@@ -129,7 +129,28 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 ══════════════════════════════════════════ */
 #cameraOverlay{position:fixed;inset:0;z-index:600;background:#000;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.3s}
 #cameraOverlay.open{opacity:1;pointer-events:all}
+/* Camera preview: mirror only for selfie display, NOT for recording */
 #cameraPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cameraPreview.selfie{transform:scaleX(-1)}
+
+/* Post-recording description overlay */
+#postDescOverlay{position:fixed;inset:0;z-index:650;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.3s}
+#postDescOverlay.open{opacity:1;pointer-events:all}
+.post-desc-header{display:flex;align-items:center;justify-content:space-between;padding:max(50px,env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--dim)}
+.post-desc-title{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--text)}
+.post-desc-title span{color:var(--pulse)}
+.post-desc-cancel{color:var(--muted);font-size:14px;cursor:pointer;padding:4px 8px}
+.post-desc-publish{background:var(--pulse);color:#000;border:none;border-radius:20px;padding:8px 20px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:opacity 0.2s}
+.post-desc-publish:active{opacity:0.8}
+.post-desc-preview{flex:1;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+#postVideoPreview{width:100%;height:100%;object-fit:cover}
+.post-desc-bottom{padding:16px;border-top:1px solid var(--dim);background:rgba(8,8,8,0.97)}
+.post-desc-input-row{display:flex;align-items:flex-start;gap:12px}
+.post-desc-av{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#000;flex-shrink:0;overflow:hidden}
+.post-desc-textarea{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:15px;resize:none;caret-color:var(--pulse);line-height:1.5;max-height:120px;min-height:44px}
+.post-desc-textarea::placeholder{color:var(--muted)}
+.post-desc-meta{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+.post-desc-loc{color:var(--pulse);font-family:var(--mono)}
 .cam-top-bar{position:absolute;top:0;left:0;right:0;padding:max(48px,env(safe-area-inset-top)) 20px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10;background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent)}
 .cam-close{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .cam-close svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -545,25 +566,23 @@ input[type=file]{display:none}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </div>
     <div class="p-av-wrap">
-      <div class="p-av" id="myAvatar"><div class="p-crown">⭐</div><span id="myAvatarInitials">MR</span></div>
+      <div class="p-av" id="myAvatar"><span id="myAvatarInitials"></span></div>
       <div class="p-av-edit-badge" onclick="openEditProfile()">
         <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </div>
     </div>
     <div class="p-name-row">
-      <div class="p-name" id="myName">Mia Reyes</div>
-      <div class="p-verified">✓</div>
-      <div class="p-star">ESTRELLA</div>
+      <div class="p-name" id="myName"></div>
     </div>
-    <div class="p-handle" id="myHandle">@miareyes</div>
+    <div class="p-handle" id="myHandle"></div>
     <div class="p-loc" id="myLoc">📍 Obteniendo ubicación...</div>
   </div>
-  <div class="p-bio" id="myBio">Capturando el momento exacto. 📍 Siempre cerca.<br>Creadora de contenido local.</div>
-  <div class="p-tags"><div class="ptag">🎵 Música</div><div class="ptag">📸 Fotos</div><div class="ptag">🏙️ Ciudad</div><div class="ptag">🌙 Noche</div></div>
+  <div class="p-bio" id="myBio"></div>
+  <div class="p-tags" id="myTags" style="display:none"><div class="ptag">🎵 Música</div><div class="ptag">📸 Fotos</div><div class="ptag">🏙️ Ciudad</div><div class="ptag">🌙 Noche</div></div>
   <div class="p-stats">
-    <div class="pstat"><div class="pstat-num">12.4K</div><div class="pstat-lbl">Pulses</div></div>
-    <div class="pstat"><div class="pstat-num" id="myFollowers">89.2K</div><div class="pstat-lbl">Seguidores</div></div>
-    <div class="pstat"><div class="pstat-num">2.1M</div><div class="pstat-lbl">Views</div></div>
+    <div class="pstat"><div class="pstat-num" id="myPulseCount">0</div><div class="pstat-lbl">Pulses</div></div>
+    <div class="pstat"><div class="pstat-num" id="myFollowers">0</div><div class="pstat-lbl">Seguidores</div></div>
+    <div class="pstat"><div class="pstat-num" id="myViews">0</div><div class="pstat-lbl">Views</div></div>
   </div>
   <div class="p-btns">
     <button class="p-btn-e" onclick="openEditProfile()">Editar perfil</button>
@@ -862,6 +881,29 @@ input[type=file]{display:none}
       <div class="cam-record-inner"></div>
     </div>
     <div class="cam-hint" id="camHint">Tocá para grabar · máx. 10 seg</div>
+  </div>
+</div>
+
+<!-- POST DESCRIPTION OVERLAY -->
+<div id="postDescOverlay">
+  <div class="post-desc-header">
+    <div class="post-desc-cancel" onclick="cancelPost()">Cancelar</div>
+    <div class="post-desc-title">nuevo <span>pulse</span></div>
+    <button class="post-desc-publish" onclick="publishPost()">Publicar</button>
+  </div>
+  <div class="post-desc-preview">
+    <video id="postVideoPreview" autoplay loop muted playsinline></video>
+  </div>
+  <div class="post-desc-bottom">
+    <div class="post-desc-input-row">
+      <div class="post-desc-av" id="postDescAv"></div>
+      <textarea class="post-desc-textarea" id="postDescText" placeholder="Escribí una descripción..." rows="2" maxlength="150"></textarea>
+    </div>
+    <div class="post-desc-meta">
+      <span>📍</span>
+      <span class="post-desc-loc" id="postDescLoc">Tu ubicación</span>
+      <span>· Visible para todos</span>
+    </div>
   </div>
 </div>
 
@@ -1268,14 +1310,23 @@ document.getElementById('avatarFilePicker').addEventListener('change',function()
 /* ══════════════════════════════════════════
    CAMERA
 ══════════════════════════════════════════ */
+let lastVideoBlob=null;
+
 async function openCamera(){
   try{
-    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:true});
-    document.getElementById('cameraPreview').srcObject=camStream;
+    camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:camFacing,width:{ideal:1080},height:{ideal:1920}},
+      audio:true
+    });
+    const preview=document.getElementById('cameraPreview');
+    preview.srcObject=camStream;
+    // Mirror display for selfie camera ONLY — recording stays un-mirrored
+    camFacing==='user'?preview.classList.add('selfie'):preview.classList.remove('selfie');
     document.getElementById('cameraOverlay').classList.add('open');
     document.getElementById('camHint').textContent='Tocá para grabar · máx. 10 seg';
     document.getElementById('camProgressBar').style.width='0%';
     document.getElementById('camTimerDisplay').classList.remove('visible');
+    document.getElementById('camTimerDisplay').textContent='0:00';
   } catch(e){
     toast('📷 Permiso de cámara denegado');
   }
@@ -1299,7 +1350,9 @@ async function flipCamera(){
   stopCamStream();
   try{
     camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:true});
-    document.getElementById('cameraPreview').srcObject=camStream;
+    const preview=document.getElementById('cameraPreview');
+    preview.srcObject=camStream;
+    camFacing==='user'?preview.classList.add('selfie'):preview.classList.remove('selfie');
   } catch(e){toast('No se pudo cambiar cámara');}
 }
 
@@ -1315,17 +1368,20 @@ function startCamRecord(){
   document.getElementById('camTimerDisplay').classList.add('visible');
   document.getElementById('camHint').textContent='Grabando... tocá para detener';
 
-  // Try MediaRecorder if available
+  const chunks=[];
   try{
-    const chunks=[];
-    camRecorder=new MediaRecorder(camStream);
-    camRecorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    const mimeType=MediaRecorder.isTypeSupported('video/mp4')
+      ?'video/mp4'
+      :MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ?'video/webm;codecs=vp9':'video/webm';
+    camRecorder=new MediaRecorder(camStream,{mimeType});
+    camRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
     camRecorder.onstop=()=>{
-      const blob=new Blob(chunks,{type:'video/webm'});
+      const blob=new Blob(chunks,{type:camRecorder.mimeType||'video/webm'});
       onRecordingComplete(blob);
     };
-    camRecorder.start();
-  } catch(e){camRecorder=null;}
+    camRecorder.start(100);
+  } catch(e){camRecorder=null;toast('⚠️ Tu dispositivo no soporta grabación');}
 
   camTimer=setInterval(()=>{
     camSeconds++;
@@ -1348,9 +1404,58 @@ function stopCamRecord(){
 
 function onRecordingComplete(blob){
   closeCamera();
-  setTimeout(()=>{
-    notif('📍 Pulse publicado · 0m de distancia');
-  },400);
+  lastVideoBlob=blob;
+  setTimeout(()=>openPostDesc(blob),300);
+}
+
+function openPostDesc(blob){
+  const av=document.getElementById('postDescAv');
+  av.style.background=myProfile.avatarGradient||'var(--surface2)';
+  if(myAvatarImg){
+    av.innerHTML=`<img src="${myAvatarImg}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    av.textContent=myProfile.avatarInitials||'?';
+    av.style.color='#000';
+  }
+  document.getElementById('postDescLoc').textContent=myProfile.location||'Tu ubicación';
+  const vid=document.getElementById('postVideoPreview');
+  if(blob){const url=URL.createObjectURL(blob);vid.src=url;vid.play().catch(()=>{});}
+  else vid.src='';
+  document.getElementById('postDescText').value='';
+  document.getElementById('postDescOverlay').classList.add('open');
+}
+
+function cancelPost(){
+  document.getElementById('postDescOverlay').classList.remove('open');
+  const vid=document.getElementById('postVideoPreview');
+  vid.pause();vid.src='';lastVideoBlob=null;
+}
+
+function publishPost(){
+  const desc=document.getElementById('postDescText').value.trim();
+  const newPost={
+    id:Date.now(),userId:'me',
+    user:myProfile.handle||'@yo',
+    name:myProfile.name||'Vos',
+    av:myProfile.avatarInitials||'?',
+    avc:myProfile.avatarGradient||'var(--surface2)',
+    avatarImg:myAvatarImg||null,
+    star:false,nearby:true,dist:'0m',
+    caption:desc||'📍 Nuevo Pulse',
+    bg:'linear-gradient(160deg,#0a0a14,#0a140a,#0a0a0a)',
+    emoji:'📍',likes:0,comments:'0',shares:'0',
+    videoUrl:lastVideoBlob?URL.createObjectURL(lastVideoBlob):null,
+    time:'Ahora',location:myProfile.location||''
+  };
+  POSTS_NEARBY.unshift(newPost);
+  const cnt=document.getElementById('myPulseCount');
+  if(cnt)cnt.textContent=parseInt(cnt.textContent||0)+1;
+  document.getElementById('postDescOverlay').classList.remove('open');
+  const vid=document.getElementById('postVideoPreview');
+  vid.pause();vid.src='';lastVideoBlob=null;
+  buildFeed();buildProfileGrid();
+  notif('📍 Pulse publicado · 0m de distancia');
+  go('feed');
 }
 
 /* ══════════════════════════════════════════
@@ -1367,15 +1472,28 @@ function buildFeed(){
   }
   posts.forEach(p=>{
     const el=document.createElement('div');el.className='post';el.style.height='calc(100vh - 0px)';
-    el.innerHTML=`<div class="post-bg" style="background:${p.bg}"><div class="post-emoji-big">${p.emoji}</div></div>
+
+    // Background: real video if available, else gradient+emoji
+    let bgHtml='';
+    if(p.videoUrl){
+      bgHtml=`<div class="post-bg" style="background:#000"><video autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" src="${p.videoUrl}"></video></div>`;
+    } else {
+      bgHtml=`<div class="post-bg" style="background:${p.bg}"><div class="post-emoji-big">${p.emoji}</div></div>`;
+    }
+
+    // Avatar: image or initials
+    const avInner=p.avatarImg
+      ?`<img src="${p.avatarImg}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      :p.av;
+
+    el.innerHTML=`${bgHtml}
     <div class="post-tg"></div><div class="post-bg2"></div>
     <div class="post-info">
       <div class="post-user-row">
-        <div class="avatar" style="background:${p.avc}">${p.av}</div>
-        ${p.star?'<div class="star-badge">★</div>':''}
+        <div class="avatar" style="background:${p.avatarImg?'none':p.avc}">${avInner}</div>
         <div><div class="post-uname">${p.name} <span style="color:var(--muted);font-size:12px;font-weight:400">${p.user}</span></div><div class="post-dist">📍 ${p.dist}</div></div>
       </div>
-      <div class="post-cap">${p.caption}</div>
+      ${p.caption?`<div class="post-cap">${p.caption}</div>`:''}
       <div class="post-tag ${p.nearby?'tag-nb':'tag-fl'}">${p.nearby?'📍 Cercano':'💜 Siguiendo'}</div>
     </div>
     <div class="post-actions">
