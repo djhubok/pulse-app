@@ -12,6 +12,24 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Firebase SDK — reemplazá la config con la tuya de Firebase Console -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+// Firebase config — pegá acá tu config de Firebase Console
+// Proyecto → Configuración → Tu app web → firebaseConfig
+const _fbConfig = {
+  apiKey: "AIzaSy...",                    // ← tu apiKey
+  authDomain: "djhub-3a903.firebaseapp.com", // ← tu authDomain (ya lo tenés)
+  projectId: "djhub-3a903",               // ← tu projectId
+  storageBucket: "djhub-3a903.appspot.com",
+  messagingSenderId: "442661677792",
+  appId: "1:442661677792:web:..."          // ← tu appId
+};
+try{
+  if(!firebase.apps.length) firebase.initializeApp(_fbConfig);
+} catch(e){}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 :root{
@@ -25,34 +43,57 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .app{width:100%;height:100%;position:relative;overflow:hidden}
 
 /* ══════════════════════════════════════════
-   AUTH SCREEN
+   AUTH SCREEN — mobile optimized
 ══════════════════════════════════════════ */
-#authScreen{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;transition:opacity 0.4s,transform 0.4s}
+#authScreen{
+  position:fixed;inset:0;z-index:1000;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
+  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));
+  transition:opacity 0.4s,transform 0.4s;
+}
+#authScreen::-webkit-scrollbar{display:none}
 #authScreen.hidden{opacity:0;pointer-events:none;transform:scale(1.04)}
-.auth-glow{position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(0,255,135,0.12) 0%,transparent 70%);pointer-events:none}
-.auth-logo{font-family:var(--mono);font-size:42px;font-weight:700;letter-spacing:-0.05em;margin-bottom:8px;text-align:center}
+.auth-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:260px;height:200px;background:radial-gradient(circle,rgba(0,255,135,0.1) 0%,transparent 70%);pointer-events:none;flex-shrink:0}
+.auth-logo{font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:-0.05em;margin-top:24px;margin-bottom:4px;text-align:center;flex-shrink:0}
 .auth-logo span{color:var(--pulse)}
-.auth-tagline{font-size:14px;color:var(--muted);text-align:center;margin-bottom:48px;font-weight:300;line-height:1.5}
-.auth-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--dim);border-radius:20px;padding:24px;margin-bottom:16px}
-.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:22px}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.22s;color:var(--muted)}
+.auth-tagline{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;font-weight:300;line-height:1.45;flex-shrink:0}
+.auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--dim);border-radius:18px;padding:18px 16px;margin-bottom:12px;flex-shrink:0}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px}
+.auth-tab{flex:1;text-align:center;padding:7px 4px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted)}
 .auth-tab.active{background:var(--surface3);color:var(--text)}
-.auth-field{margin-bottom:14px}
-.auth-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px;letter-spacing:0.04em;text-transform:uppercase}
-.auth-input{width:100%;background:var(--surface2);border:1px solid var(--dim);border-radius:12px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;caret-color:var(--pulse);transition:border-color 0.2s;user-select:auto}
-.auth-input:focus{border-color:rgba(0,255,135,0.35)}
+.auth-field{margin-bottom:10px}
+.auth-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px;letter-spacing:0.04em;text-transform:uppercase}
+.auth-input{
+  width:100%;background:var(--surface2);border:1px solid var(--dim);
+  border-radius:11px;padding:11px 14px;color:var(--text);font-family:var(--font);
+  font-size:15px;outline:none;caret-color:var(--pulse);transition:border-color 0.2s;
+  user-select:auto;-webkit-user-select:auto;
+  /* Prevent zoom on focus iOS */
+  font-size:16px;
+}
+.auth-input:focus{border-color:rgba(0,255,135,0.4)}
 .auth-input::placeholder{color:var(--muted)}
-.auth-btn{width:100%;background:var(--pulse);color:#000;border:none;border-radius:13px;padding:15px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:opacity 0.2s,transform 0.15s;letter-spacing:0.02em}
+.auth-btn{
+  width:100%;background:var(--pulse);color:#000;border:none;border-radius:12px;
+  padding:13px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;
+  margin-top:4px;transition:opacity 0.2s,transform 0.15s;letter-spacing:0.02em;
+}
 .auth-btn:active{opacity:0.85;transform:scale(0.98)}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0}
 .auth-divider-line{flex:1;height:1px;background:var(--dim)}
-.auth-divider-text{font-size:12px;color:var(--muted);white-space:nowrap}
-.google-btn{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--dim);border-radius:13px;padding:14px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background 0.2s,transform 0.15s}
+.auth-divider-text{font-size:11px;color:var(--muted);white-space:nowrap}
+.google-btn{
+  width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--dim);
+  border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background 0.2s,transform 0.15s;
+}
 .google-btn:active{background:var(--surface3);transform:scale(0.98)}
-.google-icon{width:20px;height:20px;flex-shrink:0}
-.auth-terms{font-size:11px;color:var(--muted);text-align:center;line-height:1.5;margin-top:20px}
+.google-icon{width:18px;height:18px;flex-shrink:0}
+.auth-terms{font-size:11px;color:var(--muted);text-align:center;line-height:1.5;margin-top:12px;padding-bottom:8px;flex-shrink:0}
 .auth-terms span{color:var(--pulse);cursor:pointer}
-.auth-error{font-size:12px;color:var(--pulse3);margin-top:8px;display:none;padding:8px 12px;background:rgba(255,0,110,0.08);border-radius:8px;border:1px solid rgba(255,0,110,0.15)}
+.auth-error{font-size:12px;color:var(--pulse3);margin-top:6px;display:none;padding:7px 11px;background:rgba(255,0,110,0.08);border-radius:8px;border:1px solid rgba(255,0,110,0.15)}
 
 /* ══════════════════════════════════════════
    NAV
@@ -1051,93 +1092,77 @@ function doLogin(){
 }
 
 function doGoogleLogin(){
-  // Real Google OAuth via Google Identity Services (GIS)
-  // This opens the actual Google account picker
-  if(typeof google!=='undefined'&&google.accounts){
-    google.accounts.id.initialize({
-      client_id:'442661677792-c19337etmaguee3dnnm7mlah1takntgg.apps.googleusercontent.com',
-      callback:handleGoogleCredential,
-      auto_select:false,
-      cancel_on_tap_outside:true,
-    });
-    google.accounts.id.prompt((notification)=>{
-      if(notification.isNotDisplayed()||notification.isSkippedMoment()){
-        // Fallback: open OAuth popup
-        openGoogleOAuthPopup();
-      }
-    });
-  } else {
-    openGoogleOAuthPopup();
-  }
-}
-
-function openGoogleOAuthPopup(){
-  // Abre el flujo real de Google OAuth
-  // Para que funcione necesitás configurar un Client ID en Google Cloud Console:
-  // 1. console.cloud.google.com → APIs & Services → Credentials
-  // 2. Create OAuth 2.0 Client ID → Web application
-  // 3. Authorized origins: tu URL de Vercel
-  // 4. Reemplazá 'YOUR_GOOGLE_CLIENT_ID' arriba con el ID generado
-  const clientId='442661677792-c19337etmaguee3dnnm7mlah1takntgg.apps.googleusercontent.com';
-  const redirectUri=encodeURIComponent(window.location.origin+window.location.pathname);
-  const scope=encodeURIComponent('openid email profile');
-  const url=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
-
-  if(clientId==='YOUR_GOOGLE_CLIENT_ID'){
-    // Sin Client ID configurado: mostrar instrucciones
-    showAuthError('regError','Para Google Login: configurá tu Client ID en Google Cloud Console (ver README)');
-    showAuthError('logError','Para Google Login: configurá tu Client ID en Google Cloud Console');
-    // Demo mode: enter as guest
-    setTimeout(()=>{
-      myProfile.name='Usuario';
-      myProfile.handle='@usuario';
-      myProfile.avatarInitials='U';
-      myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
-      enterApp();
-    },1200);
+  // Try Firebase Auth first (best option — works on mobile without popup issues)
+  if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+    const provider=new firebase.auth.GoogleAuthProvider();
+    provider.addScope('email');provider.addScope('profile');
+    // Use redirect on mobile (more reliable than popup)
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile){
+      firebase.auth().signInWithRedirect(provider);
+      // Result is handled in checkFirebaseRedirect() on load
+    } else {
+      firebase.auth().signInWithPopup(provider)
+        .then(result=>applyGoogleUser(result.user))
+        .catch(err=>{
+          if(err.code==='auth/popup-blocked'){
+            firebase.auth().signInWithRedirect(provider);
+          } else if(err.code!=='auth/popup-closed-by-user'){
+            showAuthError('regError','Error Google: '+(err.message||'Intentá de nuevo'));
+          }
+        });
+    }
     return;
   }
 
-  const popup=window.open(url,'google-oauth','width=500,height=600,scrollbars=yes');
-  const check=setInterval(()=>{
-    try{
-      if(popup.location.href.includes(window.location.origin)){
-        const hash=popup.location.hash;
-        const params=new URLSearchParams(hash.slice(1));
-        const token=params.get('access_token');
-        clearInterval(check);popup.close();
-        if(token) fetchGoogleProfile(token);
+  // Fallback: Google Identity Services One Tap (desktop only)
+  if(typeof google!=='undefined'&&google.accounts){
+    google.accounts.id.initialize({
+      client_id:'442661677792-c19337etmaguee3dnnm7mlah1takntgg.apps.googleusercontent.com',
+      callback:handleGoogleCredential,auto_select:false,
+    });
+    google.accounts.id.prompt(n=>{
+      if(n.isNotDisplayed()||n.isSkippedMoment()){
+        showAuthError('regError','Google no disponible en este navegador. Usá email y contraseña.');
       }
-    }catch(e){}
-    if(popup.closed)clearInterval(check);
-  },300);
+    });
+    return;
+  }
+
+  // No auth method available
+  showAuthError('regError','Configurá Firebase en tu proyecto para usar Google Login.');
+  showAuthError('logError','Configurá Firebase en tu proyecto para usar Google Login.');
 }
 
-function handleGoogleCredential(response){
-  // Decode JWT from Google One Tap
-  const payload=JSON.parse(atob(response.credential.split('.')[1]));
-  myProfile.name=payload.name||'Usuario Google';
-  myProfile.handle='@'+((payload.email||'').split('@')[0].replace(/[^a-z0-9]/gi,'_'));
-  myProfile.avatarInitials=(payload.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function applyGoogleUser(user){
+  myProfile.name=user.displayName||'Usuario Google';
+  myProfile.handle='@'+(user.email||'').split('@')[0].replace(/[^a-z0-9_]/gi,'_').toLowerCase();
+  myProfile.avatarInitials=(user.displayName||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
-  if(payload.picture) myAvatarImg=payload.picture;
+  if(user.photoURL)myAvatarImg=user.photoURL;
   enterApp();
 }
 
-async function fetchGoogleProfile(token){
-  try{
-    const res=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+token}});
-    const data=await res.json();
-    myProfile.name=data.name||'Usuario Google';
-    myProfile.handle='@'+((data.email||'').split('@')[0].replace(/[^a-z0-9]/gi,'_'));
-    myProfile.avatarInitials=(data.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
-    if(data.picture) myAvatarImg=data.picture;
-    enterApp();
-  }catch(e){
-    showAuthError('regError','Error al conectar con Google. Intentá de nuevo.');
-  }
+function checkFirebaseRedirect(){
+  if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length)return;
+  firebase.auth().getRedirectResult().then(result=>{
+    if(result&&result.user)applyGoogleUser(result.user);
+  }).catch(()=>{});
 }
+
+function handleGoogleCredential(response){
+  try{
+    const payload=JSON.parse(atob(response.credential.split('.')[1]));
+    myProfile.name=payload.name||'Usuario Google';
+    myProfile.handle='@'+((payload.email||'').split('@')[0].replace(/[^a-z0-9]/gi,'_'));
+    myProfile.avatarInitials=(payload.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    myProfile.avatarGradient='linear-gradient(135deg,#4285F4,#34A853)';
+    if(payload.picture)myAvatarImg=payload.picture;
+    enterApp();
+  }catch(e){showAuthError('regError','Error procesando login de Google.');}
+}
+
+function openGoogleOAuthPopup(){} // deprecated
 
 function enterApp(){
   const auth=document.getElementById('authScreen');
@@ -2053,6 +2078,8 @@ function shareProfile(){
 buildFeed();
 buildProfileGrid();
 buildSuggested();
+// Handle Google redirect result (mobile sign-in)
+checkFirebaseRedirect();
 </script>
 </body>
 </html>
