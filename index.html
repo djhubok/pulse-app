@@ -12,23 +12,21 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<!-- Firebase SDK — reemplazá la config con la tuya de Firebase Console -->
+<!-- Firebase SDK — usando compat para HTML estático -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
-// Firebase config — pegá acá tu config de Firebase Console
-// Proyecto → Configuración → Tu app web → firebaseConfig
 const _fbConfig = {
-  apiKey: "AIzaSy...",                    // ← tu apiKey
-  authDomain: "djhub-3a903.firebaseapp.com", // ← tu authDomain (ya lo tenés)
-  projectId: "djhub-3a903",               // ← tu projectId
-  storageBucket: "djhub-3a903.appspot.com",
-  messagingSenderId: "442661677792",
-  appId: "1:442661677792:web:..."          // ← tu appId
+  apiKey: "AIzaSyBp5IR59yXg9r_fr1qhTpIZXRQeK1iH0MM",
+  authDomain: "pulse-app-5bf16.firebaseapp.com",
+  projectId: "pulse-app-5bf16",
+  storageBucket: "pulse-app-5bf16.firebasestorage.app",
+  messagingSenderId: "394113160207",
+  appId: "1:394113160207:web:93c53b09502526b46fbf7a"
 };
 try{
   if(!firebase.apps.length) firebase.initializeApp(_fbConfig);
-} catch(e){}
+} catch(e){ console.warn('Firebase init error:',e); }
 </script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
